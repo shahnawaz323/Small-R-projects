@@ -1,0 +1,272 @@
+---
+title: "2 exercices Rstudio"
+author: "Lynda.M"
+date: "`r Sys.Date()`"
+output: word_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r load-packages, message=FALSE}
+library(tidyverse)
+library(openintro)
+library(car)
+```
+
+## import: the .csv file to the global environment (it's relative to where you put the employee.csv, for example I put it in desktop (in the office)
+
+```{r}
+employee <- read.csv("employee.csv", TRUE, ",")
+class(employee)
+View(employee)
+
+```
+
+
+
+## Exercise 1
+
+### a
+a. Check that the sample size is n = 71 observations.
+```{r}
+nrow(employee)
+```
+ 
+The number of rows above shows that sample size is 71. 
+ 
+### b
+b. Noting Td.d.l. a random variable following a Student's t law at d.d.l. degrees of freedom, calculate the probability P (T69 > 0)  . Comment.
+
+Answer:
+The formula for calculating probability is pt(q=T,df). Here we have df=69 as given above so we calculate the probability as 
+```{r}
+pt(0,df=69,lower.tail=F)
+```
+
+The result shows that one sided p value is 0 which shows that there is 50% chance of getting distribution on positive side of the t-curve.
+
+### c
+c. Find the point q0.8 such that P (T69 < q0.8) = 0.8 (80% of the observations are below).
+
+Answer:
+```{r}
+pt(0.8,df=69,lower.tail = T)
+```
+
+
+
+### d
+d. Find the point t⋆69 such that P (|T69| ≥ t⋆69 ) = α where α = 5%.
+Answer:
+```{r}
+1-pt(0.69,69,lower.tail = T)
+```
+
+
+## Exercice 2
+
+
+Consider experience as the explanatory variable and salary as the explained variable.
+
+donc x= experience (explanatory variable),  y=  salary  (explained variable).
+
+
+### a
+
+a. Calculate the mean of each of these variables as well as their respective standard deviation.
+
+#### a.1
+
+Answer:
+La moyenne de la variable expérience est : 5.746479
+l'écart type de la variable expérience est : 3.241333
+
+```{r}
+mean(employee$experience)
+sd(employee$experience)
+```
+
+Mean value for experience is 5.74
+Standard deviation for experience is 3.24.
+
+#### a.2
+
+```{r}
+mean(employee$salary)
+sd(employee$salary)
+```
+
+La moyenne de la variable salary est : 45141.51
+l'écart type de la variable expérience est : 10805.85
+
+### b
+b. Use a scatter plot to represent the relationship between these two variables and describe the relationship between them.
+
+
+```{r}
+library(ggplot2)
+
+ggplot(employee) +
+ aes(x = experience, y = salary) +
+ geom_point(shape = "circle open", size = 2.6, colour = "#461124") +
+ labs(subtitle = "Relationship between salary and experience") +
+ ggthemes::theme_base()
+```
+
+
+Generally with increase in experience salary also increases according to the plot. The relationship between two variable is not strictly linear. In some cases the salary is high even with less experience. The employee with 10 years of experience have highest salaries in the dataset. 
+
+
+### c
+
+c. Calculate and interpret their correlation coefficient. Comment against the scatter plot.
+
+```{r}
+cor(employee$experience,employee$salary,method=c("pearson", "kendall", "spearman"))
+```
+
+Corelation coefficient value is 0.55 between the two variables. Generally the coefficient value > 0.5 means that two variables are weakly positive correlated with each other. It can be observed from the scatter plot as well where with increase of experience salary increases as well. The scatter plots shows that there are some cases where salary is not increasing with experience for employee and it can be an underlying reason for not getting a much value of correlation coefficient. 
+
+
+### d
+d. Give the equation of the regression line that connects the two variables and plot it on the scatter plot.
+
+```{r}
+a <- employee$experience
+b <- employee$salary
+model <- lm(a~b,data=employee)
+model
+```
+
+Answer:
+
+- the estimated regression line equation can be written as follows:
+
+salary = -1.7213787 + 0.0001654*experience
+
+The intercept value is negative which means that the 
+
+```{r}
+
+ggplot(data = employee, aes(x = experience, y = salary)) + geom_point() + stat_smooth(method = "lm", se = TRUE) +
+ ggthemes::theme_base()
+
+
+```
+
+### e
+e. Calculate the standard error Sb1 of the slope b1 of the regression line.
+
+
+
+```{r}
+sqrt(deviance(model)/df.residual(model))
+```
+
+standard error $S_{b1}$ of slope $b_1$: 2.72 on 69 degrees of freedom
+
+### f
+f. Deduce the 95% confidence interval of the slope b1.
+```{r}
+confint(model,'employee$salary',level=0.95)
+```
+
+### g
+g. Test at the 5% threshold if the slope is significantly different from 0. Interpret the result.
+
+
+For this purpose we need to define 2 hypothesis at 5% sigi=nficance level which can tested afterwards;
+**Null hypothesis H0**: Slope is significantly different than 0
+**Alternate Hypothesis HA**: Slope is not significantly different than 0
+
+The result of t-test below shows that p-value is less than 0.05 (significance level) so we reject our null hypothesis. 
+
+Since we rejected the null hypothesis, we have sufficient evidence to say that the true average increase in salary for experience is not zero.
+
+
+```{r}
+t.test(employee$experience,employee$salary,data=employee)
+```
+
+
+### h
+h. How much of the variability in wages can be explained by the fact that some employees have more experience than others?
+
+```{r}
+summary(model)
+```
+
+The summary of our regression model shows that R2 is 0.29 which means for 29% percent of time the salary can be predicted based on the experience value. Hence 29% of variability in one can be explained by the differences in the other variable. 
+
+### i
+i. What annual salary could be expected from an employee with 8 years of experience? And an employee with 3 years of experience?
+
+We can deduce that from our linear equation of the model.
+
+#### For 8 years of experience 
+```{r}
+predict(model,data.frame(b=8),interval = 'confidence',level=0.95)*10000
+```
+
+so for an employee with 8 years of experience, salary of 17201 is expected.
+
+#### for 3 years of experience
+
+```{r}
+predict(model,data.frame(b=3),interval = 'confidence',level=0.95)*10000
+```
+
+so for an employee with 3 years of experience, salary of 17209 is expected.
+
+### j
+
+j. Examine the regression conditions based on the residuals.
+
+Extraction des résidus
+```{r}
+head(resid(model))
+```
+
+
+It is observed that the residuals seem to follow a trend. On time series data (traditionally ordered chronologically), this could indicate an auto-correlation of errors (contrary to the independence hypothesis), and therefore of condition not taken into account (ex: age, training, etc.) .
+
+```{r}
+res<-resid(model)
+plot(res,main="Résidus") + abline(h=0,col="blue")
+```
+
+
+
+
+#### k
+k. Create employee_f a base that includes all employees and employee_m the rest of the sample. Calculate the slope of the regression in each subgroup and comment.
+
+```{r}
+
+#subtracting 1st id column
+p <- employee[,-1]
+
+# creating a dataframe for female employee
+employee_f <- p %>% filter(gender==0)
+
+#creating a dataframe for male employee
+employee_m <- p %>% filter(gender==1)
+
+#fitting regression model on female employee
+model_f <- lm(employee_f$experience~employee_f$salary,data=employee_f)
+
+#fitting regression model on male employee
+model_m <-  lm(employee_m$experience~employee_m$salary,data=employee_m)
+
+# slope of regression for female subgroup
+
+model_f$coef[2]
+
+# slope of regression for male subgroup
+model_m$coef[2]
+
+```
+
+The slope of regression for female subgroup is `r model_f$coef[2]` and the slope of regression for male subgroup is `r model_m$coef[2]`.  
