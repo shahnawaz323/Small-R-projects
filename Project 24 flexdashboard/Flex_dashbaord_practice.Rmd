@@ -1,0 +1,96 @@
+---
+Title: "Assignment #2"
+Author: "J.R. DeLoach"
+Date: "10/10/2019"
+
+output: flexdashboard::flex_dashboard
+---
+
+
+
+```{r echo=F}
+library(flexdashboard)
+knitr::opts_chunk$set(echo = TRUE, results = "asis")
+knit_print.data.frame = function(x, ...) {
+  res = paste(c("", "", knitr::kable(x)), collapse = "\n")
+  knitr::asis_output(res)
+}
+
+registerS3method(
+  "knit_print", "data.frame", knit_print.data.frame,
+  envir = asNamespace("knitr")
+)
+
+```
+
+
+```{r warning=FALSE,message=FALSE,echo=F}
+library(data.table)
+library(tidyverse) 
+library(ggplot2)
+library(flexdashboard)
+library(readxl)
+library(xlsx)
+library(kableExtra)
+```
+
+
+**Question 5**
+
+
+```{r echo=F}
+df1  <- read_excel("~/Downloads/r projects from freelanc/ass24/Counties Data Set 1.xlsx")
+df2  <- read_excel("~/Downloads/r projects from freelanc/ass24/Counties Data Set 2.xlsx")
+df3  <- read_excel("~/Downloads/r projects from freelanc/ass24/Counties Data Set 3.xlsx")
+```
+
+
+```{r echo=F}
+names(df2) <- c("county",      "state"      , "pop.density" ,"pop"     ,    "pop.change" , "age6574"   ,  "age75"   ,    "crime"   ,    "college" ,    "income"     ,
+"farm" ,       "democrat" ,   "republican",  "white"  ,     "black"    ,   "turnout"  )
+
+names(df3) <- c("county",      "state"      , "pop.density" ,"pop"     ,    "pop.change" , "age6574"   ,  "age75"   ,    "crime"   ,    "college" ,    "income"     ,
+"farm" ,       "democrat" ,   "republican",  "white"  ,     "black"    ,   "turnout"  )
+
+```
+
+
+
+
+```{r echo=F}
+df <- rbind(df1,df2,df3)
+```
+
+
+Table of means and standard deviation
+---
+
+Table of means and standard deviation of the desired columns in table below. 
+```{r echo=T}
+x <- data.frame("Population density"=df$pop.density,"population"=df$pop,
+ "Democrats"=df$democrat, "Republicans"=df$republican,
+"Whites"=df$white,"Blacks"=df$black,"Turnout"=df$turnout)
+
+
+x <-  na.omit(x)
+
+x1 <- colMeans(x)
+y <- sapply(x,sd)
+
+ 
+data.frame(x1,y) %>% kbl(align="c",col.names=c("Mean","Standard deviation"))
+```
+
+barplot for black and white in each state
+---
+```{r echo=T}
+df1 <- data.frame("state"=df$state,"Black"=df$black,"White"=df$white)
+
+library(tidyr)
+df1 %>%
+    pivot_longer(cols = -state, names_to = 'colour') %>%
+    ggplot(aes(x = colour, y = value, fill = state)) +
+         geom_col(position = "dodge") +
+         labs(y = "Percent")
+
+```

@@ -1,0 +1,314 @@
+---
+title: "Assignment"
+author: "Ammara Tayyab"
+date: "`r Sys.Date()`"
+output: pdf_document
+---
+
+
+
+
+```{r echo=FALSE}
+knitr::opts_chunk$set(echo = TRUE, results = "asis")
+knit_print.data.frame = function(x, ...) {
+  res = paste(c("", "", knitr::kable(x)), collapse = "\n")
+  knitr::asis_output(res)
+}
+
+registerS3method(
+  "knit_print", "data.frame", knit_print.data.frame,
+  envir = asNamespace("knitr")
+)
+
+```
+
+**Loading libraries**
+
+```{r warning=FALSE,message=FALSE}
+library(data.table)
+library(tidyverse) 
+library(ggplot2)
+library(flexdashboard)
+library(readxl)
+library(xlsx)
+library(kableExtra)
+```
+
+
+**Question 1**
+
+reading data from excel files
+
+
+```{r}
+df1  <- read_excel("~/Downloads/Counties Data Set 1.xlsx")
+df2  <- read_excel("~/Downloads/Counties Data Set 2.xlsx")
+df3  <- read_excel("~/Downloads/Counties Data Set 3.xlsx")
+```
+
+making identical column names to combine 3 data sets
+
+```{r}
+names(df2) <- c("county",      "state"      , "pop.density" ,"pop"     , 
+   "pop.change" , "age6574"   ,  "age75"   ,    "crime"   ,    "college" ,    "income"     ,
+"farm" ,       "democrat" ,   "republican",  "white"  ,     "black"    ,   "turnout"  )
+
+names(df3) <- c("county",      "state"      , "pop.density" ,"pop"     ,
+    "pop.change" , "age6574"   ,  "age75"   ,    "crime"   ,    "college" ,    "income"     ,
+"farm" ,       "democrat" ,   "republican",  "white"  ,     "black"    ,   "turnout"  )
+
+```
+
+Combining the 3 data sets row wise so that no data gets lost
+
+
+```{r}
+df <- rbind(df1,df2,df3)
+```
+
+**Question 2**
+"Dealing with missing values and calculating percentage of missing in 16 variables"
+
+```{r}
+map(df, ~mean(is.na(.))*100)
+```
+The above results shows that overall there are less than 5% of missing values in the data set with highest percentage for democrat column. 
+
+Missing values in R are dealt by using `is.na` or `na.omit` function. `na.omit` removes all rows with `nan` values.  We can calculate the sum of missing values in each column and then divide it by the total number of rows to calculate percentage. For an easy solution we use base R map function below. 
+Usually for the numerical variables we can fill missing values  with mean value if we do not want to lose large number of rows and with mode for categorical variables.
+
+**Question 3**
+"Identify if there are any outliers in the data set"
+
+An outlier is a point which is distant from the other majority points in the data. Usually they are small in number and we can identify outliers by boxplot which shows the median and quartile of the data set. Another graphical illustration is histogram which can help us to check outliers. Other methods to detect outliers are using z-score and other statistical methods (Grubb, Dixon and Rosner tests).  
+
+As an example we plot boxplot for all numerical variables in whole datset.
+
+```{r}
+boxplot(df[,3:16])
+```
+
+The above graph shows that variables population density has highest number of outliers as compared to other variables. Lets chnage the ylimit of the graph to see the outliers more clearly. 
+
+```{r}
+boxplot(df[,3:16], ylim = c(0,200))
+```
+
+By having a closer we can observe that outliers are present in each column. We can actually extract outlier values from the each data column. For example lets show the outlier values in Income variable. 
+```{r}
+boxplot.stats(df$income)$out
+```
+
+The above answer the question that there are outliers in our data. Now we will move towards removing outliers. We will use Z-score method. 
+
+```{r}
+df1  <- df[,3:16]
+df1 <-  na.omit(df1)
+z_scores <- as.data.frame(sapply(df1, function(df1) (abs(df1-mean(df1))/sd(df1))))
+```
+
+only keeping rows with z-score less than 3 
+```{r}
+no_outliers <- df1[!rowSums(z_scores>3), ] 
+
+no_outliers <- data.frame(no_outliers) 
+
+head(no_outliers) %>% kbl(.,booktabs=T,digits = c(2, 2, 2,2,2),format="latex",align="c") %>%
+     kable_styling(full_width = T,latex_options="HOLD_position",font_size=6)
+dim(no_outliers)
+dim(df1)
+
+```
+
+After removing outliers we can see that the data set is smaller with 2705 rows. 
+
+**question 4** 
+
+Function to calculate mean,median,Sd, min and max of variables 
+
+```{r}
+
+
+myfunc  <- function(df1,cols=names(df1)){
+
+combined =data.frame()
+
+for(i in 1:length(cols)){
+
+    mean=mean(df1[,cols[i]])
+    median = median(df1[,cols[i]])
+    sd=sd(df1[,cols[i]])
+    minimum= min(df1[,cols[i]])
+    maximum = max(df1[,cols[i]])
+    com  <- c(cols[i],mean,median,sd,minimum,maximum)
+    #cat(com)
+    combined= rbind(combined,com)
+}
+
+    return(kbl(combined,booktabs=T,digits = c(0, 0, 2,2,2),format="latex",
+    col.names=c("Variable","Mean","Median","STD","Minimum","Maximum"),align="c") %>%
+     kable_styling(full_width = T,latex_options="HOLD_position",font_size=8))
+    }
+
+```
+
+calling the function to get a table of 5 values for each variable
+
+
+```{r}
+myfunc(no_outliers,c("pop.density", "pop.change", "age6574", "age75",
+ "crime", "college", "income", "farm", "democrat", 
+ "republican", "white", "black", "turnout"))
+```
+
+
+**Question6**
+"Discuss what is parallel programming and how it can be performed in R. Use parallel programming to run your function to perform Exploratory Data Analysis on the given dataset. Report how parallel programming helped speed up your code."
+
+Parallel programming is a method of running multiple tasks in parallel. It is used to speed up the code by running multiple tasks in parallel for a PC with multiple cores. R is not a parallel programming language but it can be used to run multiple tasks in parallel with the help of packages. R like other langauges such as python, julia is a interpreted language unlike C,C++ which are compiled languages and they are faster than interpreted languages. Parallel programming saves time and uses all the avaiable cores of the PC. One more advantage of parallel programming is that it can use all idle cores of PC as well which are not usually used even if RAM memory is full. For Exploratory Data Analysis we can use parallel programming to speed up the code since it requires lots of data analysis with plots such density plots, corelation plots etc. It can help in machine learning to train the model in less time. Due to these popular attributes C++ is mostly used for high performance tasks as compared to R.
+Parallel computing in R usually works by two methods local parallelism and distributed parallelism/clustering. Local parallelism is used to run multiple tasks in parallel on a single machine. Distributed parallelism is used to run multiple tasks in parallel on multiple machines remotely. 
+
+We will use some packages of R which have the option to run tasks in parallel. One popular example is the Parallel package. In the end we will compare times of the tasks with and without parallel computing for the same data set. 
+
+**Exploratory Data Analysis**
+
+loading libraries required
+```{r}
+library(doParallel)
+library(foreach)
+library(parallel)
+```
+
+1. Measuring time for mean computation on single core with different plots and analysis 
+```{r}
+system.time(delay<-df %>% 
+              group_by(income) %>%
+              summarise(
+                count=n(),
+                dist=mean(age75, na.rm=TRUE),
+                delay=mean(farm, na.rm=TRUE)) %>%
+              filter(count>20, dist<2000, !is.na(delay)) %>% 
+              collect())
+```
+
+
+```{r}
+system.time(cor.test(df$democrat,df$republican, na.rm=TRUE))
+
+```
+
+```{r}
+system.time(lm(df$democrat~df$republican, na.rm=TRUE))
+```
+
+```{r}
+system.time(View(df))
+```
+
+```{r}
+
+system.time(ggplot(data=df,aes(x=reorder(county,pop.density),y=income)) + 
+  geom_bar(stat ='identity',aes(fill=income))+
+  coord_flip() + 
+  theme_grey() + 
+  scale_fill_gradient(name="Maths Score Level")+
+  labs(title = 'income and population relation',
+       y='population density',x='County')+ 
+  geom_hline(yintercept = mean(df$income),size = 1, color = 'blue'))
+
+```
+
+
+```{r}
+system.time(boxplot(df[,3:16]))
+
+ggplot(data = df, aes(x=crime,y=state, color=county)) + 
+  geom_boxplot()+
+  scale_color_brewer(palette="Dark2") + 
+  geom_jitter(shape=16, position=position_jitter(0.2))+
+  labs(title = 'is there crime in the county',
+       y='state',x='crime')
+```
+
+
+
+corelation plot on single core
+```{r}
+#install.packages("corrplot")
+
+library(corrplot)
+df <- na.omit(df)
+result = cor(df[,3:16])
+
+system.time(corrplot(result, method = "circle"))
+
+```
+
+2. Measuring time for mean computation on multiple cores 
+For this purpose we can mcapply function from parallel package which is other version of lapply of base R. 
+We will use 4 cores. 
+```{r}
+
+myfunc <- function(df) {
+
+boxplot(df[,3],df[,4])
+
+}
+system.time(mclapply(list(df,df,df),myfunc, mc.cores=4,mc.set.seed=FALSE, mc.preschedule=FALSE) )
+
+```
+
+
+```{r}
+
+myfunc <- function(df){
+
+ggplot(data=df,aes(x=reorder(county,pop.density),y=income)) + 
+  geom_bar(stat ='identity',aes(fill=income))+
+  coord_flip() + 
+  theme_grey() + 
+  scale_fill_gradient(name="Maths Score Level")+
+  labs(title = 'income and population relation',
+       y='population density',x='County')+ 
+  geom_hline(yintercept = mean(df$income),size = 1, color = 'blue')
+
+
+}
+system.time( res <- mclapply(list(df,df,df),myfunc, mc.cores=4,mc.set.seed=FALSE, mc.preschedule=FALSE) )
+```
+
+```{r}
+myfunc <- function(df){
+    df %>% 
+              group_by(income) %>%
+              summarise()
+}
+```
+
+using parallel version of lapply 
+```{r}
+set.seed(8)
+
+system.time( res <- mclapply(list(df,df,df,df,df,df),myfunc, mc.cores=4,mc.set.seed=FALSE, mc.preschedule=FALSE) )
+
+```
+
+```{r}
+myfunc <- function(df){
+
+
+result = cor(df[,3:16])
+corrplot(result, method = "circle")
+
+}
+```
+
+```{r}
+set.seed(1)
+system.time(mclapply(list(df,df,df),myfunc, mc.cores=4,mc.set.seed=FALSE, mc.preschedule=FALSE) )
+```
+
+
+
+We observe multi cores process takes less time as compared to single core 
+
