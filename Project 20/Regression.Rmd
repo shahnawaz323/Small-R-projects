@@ -1,0 +1,155 @@
+---
+title: "Untitled"
+author: ""
+date: "`r Sys.Date()`"
+output: word_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning=F,message = F)
+```
+
+
+
+## Loading libraries required
+
+```{r}
+library(data.table)
+library(tidyverse)
+library(ggplot2)
+library(dplyr)
+library(RColorBrewer)
+library(readxl)
+```
+
+# loading dataset from excel
+```{r}
+SAGE <- read_excel("SAGE.xlsx")
+```
+
+# Getting overview of the data
+
+```{r}
+format(glimpse(SAGE))
+```
+
+```{r}
+format(head(SAGE))
+```
+
+The data is in a tidy format. 
+# Corelation Analysis 
+
+Now We can start with the some basic analysis. First of all we will make pairplot to analyse the corelations between the variables.
+
+```{r}
+# install.packages("GGally")
+library(GGally)
+
+ggpairs(SAGE,                 # 
+        columns = 1:4,      
+        aes(color = centre,  
+            alpha = 0.5))   
+
+```
+
+The pairplot is a great way of analysing the datasets and finding the corelations between the variables. In the above pairplot we can observe that for 5 different countries the corelation coefficent values are vey low or negative between numeric variables.
+The boxplot between age and centre shows that age is average age is highest for South Africa and lowest for Russian Federation. There are some outliers in the age variable as shown by boxplot. The density plots show that the age is left skewed.
+Simialrly the corelation coefficent values with aesterics also show that signficant corelation between the variables for different centres. Data from Indian and Russian Federation are highliy signficant from each other. It can also be read by barplot with high values for Russian centr as compared to Indian centre.
+
+According to the requirements of the question we can choose age and sleep length as variables to analyse the corelation between them. 
+```{r}
+ggpairs(SAGE,                 # 
+        columns = c("age","sleeplength"),      
+        aes(color = centre,  
+            alpha = 0.5))  
+```
+
+The above graph shows that age and sleep length are not highly corelated with each other for different centres. The scatter plots also shows a flat trend which doesn't show any positive corelation. Moreover as shown above the age is right skewed. Density plot for sleep length shows that it is almost normally distrbuted for 4 countries exceot for Russian Federation. Moreover the overall corelation coefficent is 0.051 which is very small and it indicates that that sleep length shorttage cannot be related to age of the persons in 5 centres. 'Normally distrubution can be check by following test. 
+
+
+Before conducting the regression analysis we can check the normality of the our columns by `Shapiro Wilk test`
+
+```{r}
+shapiro.test(SAGE$age)
+```
+
+For the age column the p-value is less than 0.05 which is chosen signficance level. Since for the normality test we should have value >0.05 to consider the data to be normal so can conclude that for age data is is not normal.Now we can check for sleep length variable
+
+```{r}
+shapiro.test(SAGE$sleeplength)
+```
+
+
+
+At 5% significance level and 95% confidence interval the result of shapiro wilk normality test shows that data for sleep length is normally distrbuted since p < $\alpha$. 
+
+
+We can further analyse our two variables by a Linear regression model. 
+
+
+```{r}
+model <- lm(SAGE$age~SAGE$sleeplength)
+
+summary(model)
+```
+Result of the linear regression model indicates many important features which are described as
+
+* p-value: at 5% significance level and 95% confidence interval our p-value is <0.05 which indicates that our model is statistically significant. 
+* F-statistics: Higher the value of F-stats better it is. our F-stats value is 6.018 with degree of freedom = 2271. THis value indicates if one of variable has significant effect. 
+* Multiple R-squared = .002. This tells us that only 0.02% of time our independent variable is able to predict the dependent variables. This value is low and it also indicates why our corelation coefficent values are very low in the pair plots above.
+* Intercept: It is the intercept in the linear regression model of y=mx+c where m is slope of linear regression line. The 3 aesterics next to sleep length indicates that our p-value is in range 0.01 and 0,05. Higher the number of aesteric higher the significant the value is. 
+* Linear regression equation for above model results can be written as 
+
+$$sleeplength = 0.2507*age+62.07$$
+
+where 0.2507 is the coefficient estimate and 62.07 is the intercept. It shows that for very 1 year increase in age we should expect an increase of 62 in sleep length. 
+
+We can extract this equation by formulas as well
+
+```{r}
+library(equatiomatic)
+extract_eq(model,use_coefs=T)
+```
+
+
+* Residual Error: Smaller residual values are considere better.
+* Coefficent of determination R2: 0.002 which is very low hence our model is not good to predict the sleep length based on age value. 
+* Std Error: It is the measure of uncertainty in coefficents. 
+* Residual Standard error: Value of 9.793 indicate that actual values are this much far away from regression line. 
+* P|t| value: It is actually the t-value calculated by dividing coefficient by standard deviation. 
+We can further analyse results by 
+
+```{r}
+confint(model)
+```
+
+It varifies that our model results are at 95% confidence interval. 
+
+Now we will plot the residual and other plots for our model. 
+```{r}
+#define residuals
+res <- resid(model)
+
+#produce residual vs. fitted plot
+plot(fitted(model), res)
+
+#add a horizontal line at 0 
+abline(0,0)
+```
+
+It shows that residuals are not normally distributed around 0 hence homoscedasticity is not violated. 
+
+```{r}
+#create Q-Q plot for residuals
+qqnorm(res)
+
+#add a straight diagonal line to the plot
+qqline(res) 
+```
+The qqplot shows that data is not normally distributed. since at the edges the scatter plot doesn't follow the straight line.
+
+```{r}
+
+```
+
