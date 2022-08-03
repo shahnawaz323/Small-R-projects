@@ -1,0 +1,151 @@
+---
+title: 'Assignment # 03'
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+## Exercise # 01:
+
+### PART A:
+
+The variable of interest in this case is Option. The variable is qualitative and ranked. We have different options which are cut, raise, Inflate and let. 
+
+
+### PART B & C:
+
+In order to test at the 1% significance level that political affiliation affects support for the economic options, I will apply chi square test on all three affiliations with respect to the options variable.
+
+Null Hypothesis: The political affiliation does not affects support for the economic options.
+
+Alternate Hypothesis: The political affiliation affects support for the economic options.
+
+  From the p value, we can see that the p value is less than significance level 0.01 , we can reject the null hypothesis and conclude that the political affiliation affects support for the economic options.
+
+```{r}
+x<-c(101,282,61,38,67,25,131,88,31,61,90,25)
+obs<-t(matrix(x, nrow=3))
+chisq.test(obs, correct=FALSE)
+chisq.test(x=obs, y=NULL, correct=FALSE, simulate.p.value = TRUE, B = 100000)
+```
+
+### PART D:
+
+The are no specific requirements in this case.
+
+
+```{r, include=FALSE}
+library(readxl)
+library(ggplot2)
+library(dplyr)
+```
+
+```{r, include=FALSE}
+data <- read_excel("a3e2.xlsx")
+head(data)
+```
+
+
+## Exercise # 02:
+
+### PART A:
+
+All the three variables in the data set are quantitative. All the variables are discrete. The level of measurement couldn't be identified here.
+
+### PART B:
+
+I expect that there exists a relationship between both pairs that are credit and income, credit and size. The relationship is expected to be positive because if income increases, spending also increases and same goes for when size of household increases, the spending increases as well.
+
+### PART C:
+
+For the income and credit pair, we can see that both the variables are correlated with each other. From the correlation coefficient, we can see that the correlation between both variables is strong positive. With increase in one value, the other also increases.
+
+```{r}
+cor(data$Income, data$Credit, method = "pearson")
+```
+
+For the size and credit pair, we can see that both the variables are correlated with each other. From the correlation coefficient, we can see that the correlation between both variables is strong positive in this case too. With increase in one value, the other also increases.
+
+```{r}
+cor(data$Credit, data$Size, method = "pearson")
+```
+
+### PART D:
+
+Below are the null and alternate hypothesis:
+
+Null Hypothesis: There is no relationship between both variables.
+
+Alternate Hypothesis: There is a relationship between both variables.
+
+As the p value for correlation test is less than significance level alpha = 0.05, we can reject the null hypothesis and conclude that there exist a relationship between both variables.
+
+```{r}
+cor.test(data$Income, data$Credit, method = "pearson")
+```
+
+Below are the null and alternate hypothesis:
+
+Null Hypothesis: There is no relationship between both variables.
+
+Alternate Hypothesis: There is a relationship between both variables.
+
+As the p value for correlation test is less than significance level alpha = 0.05, we can reject the null hypothesis and conclude that there exist a relationship between both variables.
+
+```{r}
+cor.test(data$Credit, data$Size, method = "pearson")
+```
+
+
+## Exercise # 03:
+
+### PART A:
+
+Below is the summary of created model. The equation thus obtained is:
+
+Credit = 1257.003 + 32.881 * Income + 380.176 * Size
+
+```{r}
+model <- lm(Credit ~., data = data)
+summary(model)
+```
+### PART B:
+
+The coefficient of determination R square of the model is 82% which means the model is able to explain 82% variability in the target variable. This figure is good and tells us that the model is a good fitted model. Higher the R square, the better the model is.
+
+### PART C:
+
+From the overall p value of the model, we can see that the p value 2.2e-16 is less than significance level 0.01, we can conclude that the model is significant at a p value 2.2e-16.
+
+
+### PART D:
+
+The t tests applied are attached below. The null and alternate hypothesis are attached below:
+
+Null Hypothesis: The average income is not 32.
+Alternate Hypothesis: The average income is 32.
+
+From the test result, we can see that the p value for result is less than significance level alpha = 0.01, we can reject the null hypothesis and conclude that the average income is 32.
+
+```{r}
+t.test(data$Income, mu = 32)
+```
+The null and alternate hypothesis are attached below:
+
+Null Hypothesis: The average household size is not 4.
+Alternate Hypothesis: The average household size is 4.
+
+From the test result, we can see that the p value for result is greater than significance level alpha = 0.01, we can accept the null hypothesis and conclude that the average household size is 4.
+
+
+```{r}
+t.test(data$Size, mu = 4)
+```
+
+### PART E:
+
+The slope coefficients are significant as their p value is less than significance level alpha = 0.05 and both have a positive impact on the credit column. This means if we interpret the slope coefficients we can say that with one unit increase in size and income, the credit amount increases by 380.176 and 32.881 respectively. We can see that the household size has strong positive impact on target variable and same goes for income. This supports our conclusion drawn during correlation coefficient and correlation test.
+
