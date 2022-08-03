@@ -1,0 +1,208 @@
+---
+title: "2 exercices Rstudio"
+author: "Lynda.M"
+date: "`r Sys.Date()`"
+output: word_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r load-packages, message=FALSE}
+library(tidyverse)
+library(openintro)
+library(broom)
+library(wooldridge)
+library(car)
+```
+
+##import: the .csv file to the global environment (it's relative to where you put the employee.csv, for example I put it in desktop (in the office)
+
+```{r}
+employee <- read.csv("C:/Users/LENOVOx230-320GB/Desktop/employee.csv", TRUE, ",")
+class(employee)
+View(employee)
+
+```
+
+
+
+### Exercise 1
+
+####a
+a. Check that the sample size is n = 71 observations.
+```{r}
+dim(employee)
+```
+
+####b
+b. Noting Td.d.l. a random variable following a Student's t law at d.d.l. degrees of freedom, calculate the probability P (T69 > 0)  . Comment.
+```{r}
+
+```
+
+
+####c
+c. Find the point q0.8 such that P (T69 < q0.8) = 0.8 (80% of the observations are below).
+
+```{r}
+
+```
+
+
+####d
+d. Find the point t⋆69 such that P (|T69| ≥ t⋆69 ) = α where α = 5%.
+```{r}
+
+```
+
+
+### Exercice 2
+
+
+Consider experience as the explanatory variable and salary as the explained variable.
+
+donc x= experience (explanatory variable),  y=  salary  (explained variable).
+
+
+####a
+a. Calculate the mean of each of these variables as well as their respective standard deviation.
+#####a.1
+
+La moyenne de la variable expérience est : 5.746479
+l'écart type de la variable expérience est : 3.241333
+
+```{r}
+mean(employee$experience)
+sd(employee$experience)
+```
+
+#####a.2
+
+La moyenne de la variable salary est : 45141.51
+l'écart type de la variable expérience est : 10805.85
+
+```{r}
+mean(employee$salary)
+sd(employee$salary)
+```
+
+
+####b
+b. Use a scatter plot to represent the relationship between these two variables and describe the relationship between them.
+
+
+Answer: through the graph it looks like there is a weak positive linear relationship between the two variable. (with moderately loud)
+
+```{r}
+employee %>%  ggplot(aes(x = experience, y = salary)) + geom_point()
+
+plot(x = employee$experience, y = employee$salary, type = "p", main = "la relation entre l'experience et le salaire", xlab = "experience", ylab = "salary")
+```
+
+
+####c
+c. Calculate and interpret their correlation coefficient. Comment against the scatter plot.
+
+
+here, r=0.552: it is a weak positive correlation between the two variables
+
+Through the cloud plot and the correlation coefficient, it was found that the two variables tend to increase together, the coefficient is positive, and the line that represents the correlation slopes upwards. but despite this, the relationship remains weak between the two variables (moderately strong).
+
+```{r}
+cor(employee$experience, employee$salary, method=c("pearson", "kendall", "spearman"))
+```
+####d
+d. Give the equation of the regression line that connects the two variables and plot it on the scatter plot.
+
+Answer:
+
+- the estimated regression line equation can be written as follows:
+
+salary = 34575.9 + 1838.6*experience
+
+strong linear relationship between the 2 variables
+
+```{r}
+modéle.linéaire1<-lm(salary~experience, data=employee)
+summary(modéle.linéaire1)
+
+ggplot(data = employee, aes(x = experience, y = salary)) + geom_point() + stat_smooth(method = "lm", se = TRUE)
+
+plot(x = employee$experience, y = employee$salary, type = "p", main = "la relation entre l'experience et le salaire", xlab = "experience", ylab = "salary")+ abline(modéle.linéaire1, col = "blue")
+
+plot(employee$experience, employee$salary)+ abline(34575.9, 1838.6, col = "blue")
+```
+
+####e
+e. Calculate the standard error Sb1 of the slope b1 of the regression line.
+
+standard error: 9079 on 69 degrees of freedom
+
+```{r}
+summary(modéle.linéaire1)
+
+```
+
+
+####f
+f. Deduce the 95% confidence interval of the slope b1.
+```{r}
+confint(modéle.linéaire1, 0,95)
+?confint
+```
+
+####g
+g. Test at the 5% threshold if the slope is significantly different from 0. Interpret the result.
+
+
+Answer:
+Below, we see that the coefficient is quite significant, so we will be able to interpret them.
+
+
+```{r}
+attributes(modéle.linéaire1)
+summary(modéle.linéaire1)
+```
+
+
+####h
+h. How much of the variability in wages can be explained by the fact that some employees have more experience than others?
+
+```{r}
+qrom
+```
+
+
+####i
+i. What annual salary could be expected from an employee with 8 years of experience? And an employee with 3 years of experience?
+
+```{r}
+
+```
+
+
+####j
+j. Examine the regression conditions based on the residuals.
+
+##### Extraction des résidus
+```{r}
+resid(modéle.linéaire1)
+```
+##### résidus
+
+It is observed that the residuals seem to follow a trend. On time series data (traditionally ordered chronologically), this could indicate an auto-correlation of errors (contrary to the independence hypothesis), and therefore of condition not taken into account (ex: age, training, etc.) .
+
+```{r}
+res<-resid(modéle.linéaire1)
+plot(res,main="Résidus") + abline(h=0,col="blue")
+```
+
+
+
+
+####k
+k. Create employee_f a base that includes all employees and employee_m the rest of the sample. Calculate the slope of the regression in each subgroup and comment.
+
+
