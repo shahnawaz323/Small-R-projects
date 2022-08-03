@@ -1,0 +1,326 @@
+---
+title: "EDA WHO Lab"
+output: html_notebook
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE, fig.height = 4.5, fig.width = 6, fig.align = "center",message = FALSE)
+library(tidyverse)
+```
+
+In the Data Wrangling document we managed to structure a data table into a tidy dataset. Below you can see the result:
+
+```{r}
+new_who = who %>% 
+  pivot_longer(cols = new_sp_m014:newrel_f65, names_to = "key", values_to = "cases") %>% 
+  drop_na() %>% 
+  mutate(key = str_replace(key, "newrel", "new_rel")) %>% 
+  tidyr::separate(col = key, into = c("new", "type", "sexage"), sep = "_") %>% 
+  select(-c(iso2, iso3, new)) %>% 
+  tidyr::separate(col = sexage, into = c("sex", "age"), sep = 1)
+new_who
+```
+
+new_who` is now a dataset on which we can start working to clean it up and study the variation and covariation of its components.
+
+First we must understand the different variables that we will find. To do this you can search for `who` in the R studio help menu.
+
+You may remember that in the previous process we removed all the missing values to organize the structure of our data table. Now that we know how to analyze the missing values we are going to recreate the dataset without removing these values:
+
+```{r}
+# recreate the dataset without removing the NA's
+new_who = who %>% 
+  pivot_longer(cols = new_sp_m014:newrel_f65, names_to = "key", values_to = "cases") %>% 
+  mutate(key = str_replace(key, "newrel", "new_rel")) %>% 
+  tidyr::separate(col = key, into = c("new", "type", "sexage"), sep = "_") %>% 
+  select(-c(iso2, iso3, new)) %>% 
+  tidyr::separate(col = sexage, into = c("sex", "age"), sep = 1)
+new_who
+```
+
+Initially we may think that the missing values are due to problems in data collection. This, in principle, may be influenced by the year in which they were collected, by the country in which the data is being collected, or by the type of tuberculosis. Let us analyze this with R. Count the number of missing values per year, per country and per type of tuberculosis:
+
+```{r}
+# Count the number of missing values per year
+new_who %>% 
+  group_by(year) %>% 
+  summarise(na_count = sum(is.na(cases))) %>% 
+  arrange(na_count)
+```
+```{r}
+# Count the number of missing values per country
+new_who %>% 
+  group_by(country) %>% 
+  summarise(na_count = sum(is.na(cases))) %>% 
+  arrange(na_count)
+```
+
+```{r}
+# Count the number of missing values per type
+new_who %>% 
+  group_by(type) %>% 
+  summarise(na_count = sum(is.na(cases))) %>% 
+  arrange(na_count)
+```
+
+
+**Question 1:** Do you think those variables have an effect in the missing data? Explain which strategy should we use to handle the missing data in this dataset.
+
+[Answer Here]
+
+For now, we will use the initial strategy of eliminating the cases in the previous data wrangling phase to make the lab easier. In addition to this step we will convert all the character variables into factors to be used later in the analysis:
+
+```{r}
+# drop all the NA's while creating the dataset and transform the chr variables into fct
+new_who = who %>% 
+  pivot_longer(cols = new_sp_m014:newrel_f65, names_to = "key", values_to = "cases") %>% 
+  drop_na() %>% 
+  mutate(key = str_replace(key, "newrel", "new_rel")) %>% 
+  tidyr::separate(col = key, into = c("new", "type", "sexage"), sep = "_") %>% 
+  select(-c(iso2, iso3, new)) %>% 
+  tidyr::separate(col = sexage, into = c("sex", "age"), sep = 1) %>% 
+  mutate(country = factor(country),
+         type = factor(type),
+         sex = factor(sex),
+         age = factor(age))
+new_who
+```
+
+It may be a good strategy to start studying the variation of the dataset to try to detect patterns or strange cases. Let's start by looking at the distribution of our single numeric variable, `cases`:
+
+```{r}
+# Create a plot to see the distribution of the continuous variable
+
+```
+
+**Question 2:** Is this variable normally distributed? Explain how can we visualize the outliers of this variable and obtain that plot using R.
+
+[Answer Here]
+
+```{r}
+# Use the best plot to visualize the outliers
+
+```
+
+In this case there are too many extreme values, so we will not eliminate them. We will work with a transformation of this variable to collect as much information as possible.
+
+It seems clear that the number of extreme values is not manageable by an elimination strategy. In these cases it is most appropriate to use a logarithmic transformation of the variable to work with it in subsequent analyses. Let us see how the transformed variable is distributed with a logarithm of base e:
+
+```{r}
+# Create a histogram with the log transformed variable
+ggplot(new_who) +
+  geom_histogram(aes(log(cases))) + 
+  geom_freqpoly(aes(log(cases)))
+```
+
+If we look at the ggplot warning, it is warning us that 11080 rows have been removed because there were non-finite cases. This happens when we have values equal to 0 in the variable we are transforming, since the logarithm of 0 is -inf. Let's check how many values equal to 0 we have in the `cases` variable:
+
+```{r}
+# Count how many values we have in cases equal to 0
+
+```
+
+Exactly 11080, the same that ggplot removes. In these cases, the most appropriate thing to do is to add 1 to the values of the original variable so as not to lose this data, which is also of great importance. Let's do it in R:
+
+```{r}
+# create a new variable called "scaled_cases" adding 1 to each observation
+
+```
+
+```{r}
+# create a histogram with the logarithm of the scaled variable
+
+```
+
+
+**Question 3:** Interpret the plot after the transformation. Can we assume normality now?
+
+[Answer Here]
+
+Once we have analyzed our single quantitative variable, let's see what happens with the categorical variables in the dataset. Let's start by analyzing the country:
+
+```{r}
+# use the best plot to see the country variable distribution 
+```
+
+**Question 4:** Interpret the country plot. Can we conclude anything with this plot?
+
+[Answer Here]
+
+Let's see the different countries sorted according to the number of observations in each one of them:
+
+```{r}
+# obtain all the countries sorted by the number of observations
+new_who %>% 
+  group_by(country) %>% 
+  summarise(n_obs = n()) %>% 
+  arrange(n_obs)
+```
+
+**Question 5:** Can we interpret anything else with this new information? Is this table complementing the bar plot?
+
+[Answer Here]
+
+Secondly, we will perform the same operation with the `year` variable:
+
+```{r}
+# plot the year distribution 
+```
+
+Let's also look at the number of cases we have for each year:
+
+```{r}
+# obtain all the years sorted by the number of observations. Use the code we have used for countries above 
+```
+
+**Question 6:** What can we interpret from the year plot? Is the table giving us extra information in this case? What do we know now about the year variable? Would you eliminate any year?
+
+[Answer Here]
+
+Given the information above, we should filter all the years greater than some specific year, and we should also quit a year because we don't have enough information about it. Fill the code to complete the filter operation. HINT: the code will take all the years greater than the one you put after the `>` expression, and quit the year after the `!=` expression.
+
+```{r}
+# remove all the years that 
+new_who = new_who %>% 
+  filter(year > "type the year", year != "type the year")
+```
+
+Return to the visualization of the year distribution:
+
+```{r}
+# plot year 
+```
+
+We could study this difference later, and whether it has any effect on the covariation with other variables. For now we will dwell on the study of our third and fourth categorical variables, sex and age. We shall look at the distribution of the cases:
+
+```{r}
+# plot sex distribution 
+```
+
+
+```{r}
+# plot age distribution 
+```
+
+**Question 7:** What can we interpret from these plots? What type of theoretical distribution do both variables follow?
+
+[Answer Here]
+
+
+To finish with the analysis of variance we must study how the type of tuberculosis is distributed in our dataset. 
+
+```{r}
+# plot type distribution
+```
+
+**Question 8:** What can we interpret from this plot?
+
+[Answer Here]
+
+A priori we have already finished analyzing the variability that exists in our dataset, but we should remember to take a last look at the distribution of countries. Let's look directly at the case count after having removed the observations from 1980 to 1994.
+
+```{r}
+# obtain all the countries sorted by the number of observations
+new_who %>% 
+  group_by(country) %>% 
+  summarise(n_obs = n()) %>% 
+  arrange(n_obs)
+```
+
+There is still quite a significant inequality. Let's see how these cases are actually distributed with a boxplot: 
+
+```{r}
+# boxplot number of observations per country
+n_country = new_who %>% 
+  group_by(country) %>% 
+  summarise(n_obs = n()) %>% 
+  arrange(n_obs) 
+
+ggplot(n_country) +
+  geom_boxplot(aes(n_obs))
+```
+
+**Question 9:** Interpret the box plot. Is the number of observations over the countries normally distributed?
+
+[Answer Here]
+
+What we can do to facilitate further analysis is to group the cases by continent instead of by country. To do this we will make use of the `countrycode` library. You will have to install it if you do not have it.
+
+```{r}
+# install.packages("countrycode")
+library(countrycode)
+
+# Use the contrycode function to obtain each continent given the countries. Take a look to the help to understand how to use this function.
+continent = countrycode(sourcevar = new_who$country,
+                        origin = "country.name",
+                        destination = "continent")
+```
+
+We see that, because Serbia and Montenegro are currently independent countries, the library we are using does not allow us to assign "Serbia & Montenegro" to a specific continent. To perform this transformation correctly we are going to change the value "Serbia & Montenegro" to "Serbia", and for this we will use the `fct_recode` helper function inside a mutate function (this is about data wrangling, you do not suppose to know how to do this, just learn from the code).
+
+```{r}
+# recode "Serbia & Montenegro" as "Serbia" in the dataset
+new_who = new_who %>% 
+  mutate(country = fct_recode(country,"Serbia" = "Serbia & Montenegro"))
+```
+
+Now that we are sure that we can perform the operation correctly, we will obtain and store the different continents in our dataset:
+
+```{r}
+# create a new variable with the name of each continent
+new_who = new_who %>% 
+  mutate(continent = countrycode(sourcevar = new_who$country,
+                        origin = "country.name",
+                        destination = "continent"))
+```
+
+Let's see how the data is distributed by continent with a new plot:
+
+```{r}
+# plot continent distribution 
+```
+
+**Question 10:** Interpret the plot. 
+
+[Answer Here]
+
+We will now move on to the study of the covariance between the variables... To be continued in the next lab! 
+
+We will now move on to the study of the covariance between the variables. In order not to make the lab too long, we will only study the relationship of the different categorical variables with the numerical variable of the number of cases. This analysis will not be very revealing, but it will serve as an example to formulate different questions and answer them with the skills acquired in the course.
+
+Although we will preferentially use the `continent` variable, we will perform a small covariance analysis with the `country` variable just out of curiosity. For this we can make use of several resources. In this case we will make a boxplot, ordering the countries by the `log(scales_cases)` variable (for this we must use the `reorder` function inside the aesthetics layer, use the help):
+
+```{r}
+# boxplot log scaled cases by country
+```
+
+**Question 11:** ¿How can we interpret the plot above? ¿Can we use a simpler way to represent a similar information?
+
+[Answer Here]
+
+
+Let’s see now if there are differences between continents to explain the number of cases of tuberculosis:
+
+```{r}
+# boxplot log scaled cases by continent
+```
+
+
+**Question 12:** Interpret the plot above
+
+[Answer Here] 
+
+## EDA is in your hands
+
+If you have completed the lab up to this point you will have secured **80%** of the labs grade for this module. Now that you have seen some examples of the study of covariance it is time to apply what you have learned in the course. Remember that our response variable is the number of cases, and there are still different variables in the dataset that may have an effect on this number of cases. Develop new questions about the dataset, solve them with the tools you already know, and interpret the results to extract more information. Continue this process to obtain more and more information about the dataset.
+
+If you do not know how to use visualization techniques, remember that you have a Slack channel where you can ask questions to your colleagues.
+
+[CONTINUE THE LAB HERE]
+
+
+
+
+
+
+
