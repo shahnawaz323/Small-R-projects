@@ -1,0 +1,418 @@
+---
+title: "UCT 2022 final assignment"
+author: 'Uzma'
+date: "5/26/2022"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = F)
+```
+
+
+## Question 1
+
+This section provides results on analysis of interventions that try to promote growth mindsets in children learning to read. There are two groups in the analysis, namely a control group (control), and an intervention group (growth, or growth_mindset). The control group receives the usual classroom activities, whereas the growth mindset group spends an hour each week of the year doing activities aimed at promoting a growth mindset. Each child is tested at the beginning of the program (January), and then halfway through the program (June), and again at the end of the program (December). The analysis will provide descriptive statistics of the results between the 2 groups.
+
+
+### 1.1	Explore the data descriptively, creating appropriate tables and figures, where needed.
+
+Loading essential libraries
+
+```{r}
+library(pacman)
+p_load(tidyverse, magrittr, janitor,dplyr,knitr,data.table,psych,patchwork,ggrepel,haven,ggplot2,corrplot,readr,stargazer,GPArotation,car)
+```
+
+
+Loading the RDs files by the below command
+
+```{r}
+control <- readRDS("control.RDS")
+growth <- readRDS("growth.RDS")
+```
+
+We can use the `'clean names` command from the `janitor` package to clean column names according to tutorial 1 by the below code 
+
+
+```{r}
+control <- clean_names(control)
+growth <- clean_names(growth)
+```
+
+Getting summary statistics of the individual dataset. 
+```{r}
+knitr::kable(summary(control))
+```
+
+
+```{r cars}
+knitr::kable(summary(growth))
+```
+
+Individual summary statistics showed that there is one participant in growth for which there is no data available for score while for control group all data is given. The quartiles are given which will be analysed by box plot later. We row wise bind two datasets below. 
+
+Joining the two datasets and viewing data types in the columns
+```{r}
+df <- rbind(control,growth)
+str(df)
+```
+
+We can observe that the column `participant_id` is of interger type, column `reading score` which is an individual vector has data type characters while the `reading_score` from both groups has numeric data type. This can help in several way to visualize the data by using boxplots , density plots etc. 
+
+The following table provides descriptive statistics of the two groups regards reading scores, The mean is the arithmetic average while the standard deviation measures how far the results deviate from the mean. Notably, the standard deviation is larger than 2 for reading_scores, showing that the score range was large: minimum was 7 and maximum 32 for the entire group. On the other hand the time taken by the individual groups is not varying much between max and minimun values. Moreover the median value is 16 which can also be visualized with the help of boxplots below.
+
+```{r}
+knitr::kable(describeBy(df))
+```
+
+```{r}
+ggplot(df) +
+ aes(x = time, y = reading_score, fill = time) +
+ geom_boxplot() +
+ scale_fill_hue(direction = 1) +
+ ggthemes::theme_base()
+
+```
+The boxplot is an excellent illustration for the two datasets. We can observe that the mean value which is indicated by middle black line in three boxplots above is not at the same level which in turn show that there is large variation in mean scores for both groups. Furthermore the scores in the january month is very much less than the other two months for both groups. There is one outler for the january month in the two groups. We can analyse the individual groups with the same plot as 
+
+```{r}
+
+p1 <- ggplot(control) +
+ aes(x = time, y = reading_score, fill = time) +
+ geom_boxplot() +
+ scale_fill_hue(direction = 1) +
+ labs(subtitle = "Scores for the Control Group") +
+ ggthemes::theme_base()
+
+p2 <- ggplot(growth) +
+ aes(x = time, y = reading_score, fill = time) +
+ geom_boxplot() +
+ scale_fill_hue(direction = 1) +
+ labs(subtitle = "Scores for Growth group") +
+ ggthemes::theme_base()
+
+p1/p2
+```
+
+We can clearly see that the mean scores for the growth groups are higher overall in all months from the boxplot above. This has also been the case for 1st and 3rd quartiles in both groups. Fruther corelation between scores can be check by corelation test. 
+*Corelation for reading scores*
+
+```{r pressure, echo=FALSE}
+cor.test(control$reading_score,growth$reading_score)
+```
+After Applying the corelation test results show that corelation coefficient value of 0.78. It indicates that there is postive corelation between the reading scores of two groups since this value is between 0.7 and 0.9 indicating that the relationship between the variables is strong. We can say with confidence that there is a relationship because both test’s p-values are much smaller than the significance value of 0.05. It is possible that the correlation is meaningless if variables do not have a linear relationship which can be checked by scatter plot below.
+
+```{r}
+plot(control$reading_score,growth$reading_score)
+```
+The above scatter plots validates that apparently with increase of reading score of one group the reading score also increases which has been given by corelation test as well.
+The normality of the read scores for both groups can be visualized with the help density plot below. It will be helpful in the statistical tests if we opt for ANOVA tests.
+```{r}
+
+```
+
+```{r}
+
+ggplot(df) +
+ aes(x = reading_score, fill = time, colour = participant_id) +
+ geom_density(adjust = 1L) +
+ scale_fill_hue(direction = 1) +
+ scale_color_gradient() +
+ ggthemes::theme_base() +
+ facet_wrap(vars(time))
+
+```
+Histogram of reading scores of individual groups.
+
+```{r}
+hist(growth$reading_score)
+
+hist(control$reading_score)
+
+
+```
+
+
+The above histograms indicate that the highest scores are observed for growth group. Similarly number of participants with high reading scores in growth group is higher as compared to control group. None of the scores are normally distributed as well.
+
+## 1.2	Mixed Linear Model analyses 
+
+The correlation coefficient value of 0.78 indicated that there is high covariance between groups so regression analysis will produce correct results. According to the given condition the two hypothesis are
+
+**Null Hypothesis** The growth group will improve more than the control group does over time
+
+
+**Alternate Hypothesis** Both groups will improve over time
+
+This hypothesis can be check by mixed Linear regression model to show the differences in scores between control and intervention group. We cannot apply ANOVA test here since the groups compared are 2 which is against the basic requirement for the analysis of varaince. The option could have been a t-test for analysis of means. 
+
+We check our first hypotheses defined above and compare the reading scores for two groups.
+
+```{r}
+p1 <- lm(growth$reading_score~control$reading_score)
+summary(p1)
+
+```
+
+The results from the Linear regression model indicates that the model is fit, as the F-statistics is significant at 5% significance level with p-value very much less than 0.05. The R-squared, which is explanatory power of the model is 0.61, meaning that the model explains the variance between the intervention and control group 61% of the times. This is good explanatory power, caused by few variables in the model. The regression equation proposed is 1.224*`control$reading_score`+1.533. The QQ plot shows that that there are outliers on both ends of the combined dataset. data and fitted line is exatly stright so we can say that data for reading scores is not normalized. The adjusted $R^2$ is good at 0.59 suggesting that the model can only explain 59% of the variance in error-related negativity values. The t-value is quite large and postive. The three asterics next to the pr(>|t|) indicate coefficient reading score for control group is significant in our model. In view of above results we reject our hypothesis that growth group will improve more than control group over time and accept the alternate hypothesis that both groups will improve over time. 
+
+
+
+```{r}
+par(mfrow = c(2,2))
+plot(p1)
+```
+
+
+## Question 2
+
+### 2.1	Descriptive results
+
+Before running a factor analysis, it is important to explore the distribution of the data, through mean scores, and how far the average score deviates from the norm (standard deviation). In this section we run descriptive summaries.
+
+```{r}
+pisa <- read_csv("pisa_2018.csv")
+```
+
+```{r}
+knitr::kable(describeBy(pisa))
+```
+We observed that there are lots of `NaN` values in the dataset which need to be removed. The mean value of all variables are in between range of 2 and 4. Firstly we want to remove `NaN` in dataset. 
+
+```{r}
+pisa <- pisa %>% drop_na()
+```
+
+
+As required in question the variable resilience can be checked by frequency bar chart 
+
+```{r}
+hist(pisa$RESILIENCE)
+```
+
+
+Similarly for the Fear of failure
+
+```{r}
+hist(pisa$GFOFAIL)
+```
+
+
+It indicates that only participants have normally distributed scores for resilience while the for fear of failure the data is rightly skewed.  
+
+We can remove the columns not needed for analysis. We should remove all other variables other than resilience scales and fail of fear scales as given in question to compute for a two factor structure.  
+
+```{r}
+pisa <- pisa %>% select(-c(CNTSTUID,AGE,COMPETE,HISEI,HEDRES,PARED,SCREADCOMP,SCREADDIFF,JOYREAD,STIMREAD,TMINS,reading_fluency,RESILIENCE,GFOFAIL,ST184Q01HA))
+```
+
+Computing the Summary statistics of remaining columns. 
+```{r}
+describeBy(pisa)
+```
+
+We observed after the variables selection from likert scale that mean values are range 2-3.3 hence there is not much variability in the scale record. The standard error se is also very less although some items are skewed. 
+
+Before running principal component analysis we need to have a inspect corelation matrix. In order to have a clear understanding for CFA we should have a look at the correlations among our variables 
+
+```{r}
+corPlot(pisa, numbers= TRUE, colors = TRUE)
+```
+
+With regards to corelation between Resilience and GFOFAIL likert scales the corelation coefficent values are ranging between 0-0.68 which indicates that all type of postive and no corelation can exist between given values. Some negative values indicate that there are items with negative correlation with each other. 
+To look at diagnostics we run the Bartlett test. 
+
+
+```{r}
+bartlett.test(pisa)
+```
+
+
+The KMO required for the factor analysis is >0.6. We can check it by running `KMO` command below. 
+
+```{r}
+KMO(pisa)
+```
+
+
+The results of above two tests propose that factor analysis is possible since we are the threshold values of 0.6 for MSA. Moreover the small p-value indicates factor analysis is possible. The KMO values for all items are greater than 0.6 hence we have enough sampling accuracy. 
+
+**Factor model* Principal component analysis
+
+
+We now need to determine how many factors will be appropriate to use. We will run a PCA and analyse the eigenvalues. We will then use the Kaiser criterion to decide number of potential components.
+
+```{r}
+solution_1 = principal(pisa)
+solution_1$values # to compute eigenvalues
+```
+
+Eigenvalues indicate how much of the variance in the original dataset each eigenvector explains. The vector of values shows that when using Kaiser’s rule for extracting factors with Eigen values greater than 1, there are 2 maybe 3 potential components. Let's check the scree plot to see if it can explain it. 
+
+```{r}
+scree(pisa, factors = FALSE)
+```
+
+
+The scree plot shows that there are at least 1 components, after which the steepness of the eigenvalue line (amount of variance accounted for) levels out.
+
+
+According to two rules of thumb our results may lead to different conclusions.
+Rather use Horn's parallel analysis:
+* generates many random samples of uncorrelated data of the same size as the study sample (i.e. 'nonsense' data)
+* computes a correlation matrix for each of the random samples
+* these are then factor analysed ans eigenvaues are generated
+* if an eigenvalue from the study sample is greater than the corresponding eigenvalue from the random, uncorrelated data, we can conclude there is a 'true' component explaining the variance in the variables
+
+
+We use the `fa()` function to with the rotation method equal to rotational since it is not required in this rotation method that the given factors are corelated as in our case.  
+
+
+The results above indicate that our overall KMO < 0.6  Hence we do not meet the condition for two structure factor analysis. 
+```{r}
+fa.parallel(pisa, fa = "pc")
+```
+
+Parallel analysis suggests that the number of factors =  NA  and the number of components =3
+
+Considering the 2 factor solution according to question
+
+```{r}
+solution2<-principal(pisa, nfactors = 2, rotate = "none")
+solution2$values
+solution2$loadings
+```
+
+
+
+The items in fear of failure can be problematic in the analysis since they have negative loadings as calculated above. Now we will compute the cumulative variance for these items 
+
+```{r}
+knitr::kable(cumsum(solution2$values/sum(solution2$values)))
+
+fa.diagram(solution2)
+
+(solution2)
+```
+
+
+
+It was found that there were two clear factors with eigenvalues of 2.71 and 1.89 which together accounted for 59% of the total variance. Using Horn's parallel analysis produced a neat two factor solution. 
+
+The new corelation matrix as given by
+```{r include=FALSE}
+factor.model(solution2$loadings)
+```
+
+All much smaller than 0.1 showing there are really small differences between original and reproduced. This shows it is suitable for factor analysis 
+
+#### Internal reliability 
+ωt - total common variance
+ωg – variance due to one factor
+ωh - used for when there are 3 or more factors
+
+```{r}
+Omega <- omega(pisa, nfactors = 2)
+Omega$alpha
+Omega$omega.group
+```
+The raw alpha shows a Cronbach’s of α for the overall computed scale of 0.71, which is questionable. This could be due to the that most respondents were biased toward agreement.
+
+## Question 3
+
+It should also be noted that while a high value for Cronbach’s alpha indicates good internal consistency of the items in the scale, it does not mean that the scale is unidimensional. Factor analysis is a method to determine the dimensionality of a scale, in this case a Principal Components Analysis (PCA) will be applied. 
+According to the requirement of the question we need to select two variables reading fluency which will become a dependent variable. The other independent variable/variables can be our choice. We proceed with the reloading of dataset and removing ``NaN``.
+
+
+```{r}
+pisa <- read_csv("pisa_2018.csv")
+pisa <- pisa %>% drop_na()
+```
+
+
+Viewing the column names to decide about predictor variables for linear regression model
+
+```{r}
+names(pisa)
+```
+
+
+
+We can see that there are lots of variables which can have an effect on the reading fluency. For example reading fluency can depend upon Parent's occupation status `HISEI`, Compeition `COMPETE`, Enjoyment in reading `JOYREAD` etc. We can choose all variables at once or do the analysis one by one. 
+
+We will start our analysis for regression model by choosing two variables `COMPETE` and `STIMREAD`. Here the Teachers’ stimulation of reading engagement will serve as control variable which means it will be treated as constant during analysis. 
+
+```{r}
+p2 <- lm(reading_fluency~COMPETE+STIMREAD,pisa)
+summary(p2)
+```
+
+```{r}
+par(mfrow = c(2,2))
+plot(p2)
+```
+
+
+The above results indicate that none of the two variables we chose are good predictors for reading_fleuency since the three aesteics are not shown for the two variables with significant relationship to the dependent variable. Moreoever the p-value is much higher than the assumed significance level of 5% which inturn indicates the dependent variables do not have signficance influence over the dependent variable. Remember that our two hypothesis are
+
+**Null hypothesis $H_o$:** Competetion and Teachers’ stimulation of reading engagement do not have significant effect on reading influency
+
+
+**ALternate Hypothesis $H_A$**: Competetion and Teachers’ stimulation of reading engagement have significant effect on reading influency
+Hence we accept our null hypothesis. 
+
+
+Now we will proceed with the just 1 predictor variable. 
+
+The two hypothesis now are;
+
+**Null hypothesis $H_o$:** Learning time per week do not have significant effect on reading fluency
+
+
+**ALternate Hypothesis $H_A$**: Learning time per week have significant effect on reading fluency
+
+```{r}
+p1 <- lm(reading_fluency~TMINS,pisa) 
+summary(p1)
+```
+
+The new test result indicates that reading fluency is influenced by the learning since p-value is less than 0.05. One more indicator is the F-stat which is much higher this time as compared to previous 2 variables. One important thing to notice that even with and without control variables our $R^2$ is very low. We can further plot the two result from the regression plots as 
+
+```{r}
+par(mfrow = c(2,2))
+plot(p1)
+abline(p1, col=2)
+```
+
+The regression plot indicate that the residuals this time are still spread around the best line which does not show a good correlation for the two variables in our model. QQ plot is much away from the normalized straight indicating a range of outliers in the subset. 
+
+
+In conclusion we reject our null hypothesis that Learning time per week do not have significant effect on reading fluency. 
+
+The above two models have not been fully able to predict our dependent variable so we select a 2 more control variables this time to see the final relation. 
+
+
+```{r}
+p3 <- lm(reading_fluency~JOYREAD+COMPETE+STIMREAD,data=pisa)
+summary(p3)
+```
+
+In this case we observe that p-value is still greater than significance level $\alpha$ at 95% confidence interval. The reading fluency is not dependent upon the joy to read in the studies of the students according to result above. In the new model the adjusted $R^2$ is still less than 1. One important thing to notice here is the aesteric shown on JOYREAD which indicates that the reading fluency can be soemwhat significantly related to the joy to read. The residuals can be viewed in graphical form below
+
+```{r}
+par(mfrow = c(2,2))
+plot(p3)
+```
+The trend line for residuals is at a minimum slope as compared to previous models which indicates the less residual values. The cook distance graph indicates a value of less than 0.01 which means that the outliers are not affecting our results to large degree. 
+So we conclude that even with addition of new control variables the reading fluency can be dependent upon other factors. 
+
+The coefficient values can also be written for the three models as
+
+```{r}
+knitr::kable(coefficients(p1))
+knitr::kable(coefficients(p2))
+knitr::kable(coefficients(p3))
+```
+
+The intercept values are not much different in the all models with and without control variables.
