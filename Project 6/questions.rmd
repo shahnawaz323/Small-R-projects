@@ -1,0 +1,206 @@
+---
+title: "Lab 4 Homework"
+author: "Saifeldin Fathelbab"
+date: "2/19/2022"
+output:
+  html_document: default
+  word_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+### 1. Loading a data frame
+
+The Palmer penguins data contains size measurements for three penguin species observed on three islands in the Palmer Archipelago, Antarctica. This data is thought to be an alternative to using the iris dataset -- a very widely used dataset first published in work by R A Fisher, a eugenicist with vile and harmful views on race.
+
+
+a.  Load the penguins dataframe by running the code chunk below
+```{r}
+penguins <- read.csv("https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2020/2020-07-28/penguins.csv")
+
+penguins <- na.omit(penguins)  #drops the rows with NA values
+```
+
+b.  Use the `head()` function to verify that the data loaded correctly.
+
+```{r}
+head(penguins)
+```
+
+c.  Use the `str()` to get more information about the variables in the penguins dataframe.
+
+```{r}
+str(penguins)
+```
+
+# d.  Which of the variables in the penguins dataframe are quantitative?  List them here.
+bill_lenghth_mm , bill+septh_mm , flipper_length_mm, body mass_g
+#e.  List the qualitative variables in the penguins dataframe.
+Species, Iseland , Sex
+
+#f.  Which of your qualitative variables can be converted into factors?
+Species, Iseland , Sex
+
+#g.  Convert those qualitative variables into factors
+```{r}
+gender.f <- factor(penguins$sex , labels = c("male", "female"))
+is.factor(gender.f)
+
+island.f <- factor(penguins$island , labels = c("Torgersen", "Biscoe", "Dream"))
+is.factor(island.f)
+Species.f <- factor(penguins$species , labels = c("Adelie", "	
+Gentoo", "Chinstrap"))
+is.factor(Species.f)
+```
+
+#h.  Check the structure of the variables to verify they are properly coded.
+```{r}
+str(gender.f)
+#str(species.f)
+str(island.f)
+
+```
+
+#i.  What are the levels of the variable `island`?
+```{r}
+levels(island.f)
+```
+
+#j.  Which island has the most penguins?
+```{r}
+island.f.freq = table(island.f)
+island.f.freq
+```
+Torgersen has the most penguins
+#k.  Create a two-way table of island and species.  Which combination has the most penguins?
+```{r}
+data <- table(penguins$island, penguins$species)
+data
+```
+In Bisco island most of the penguins belongs from Gentoo speci
+#l.  Create subsets based on the penguin species.
+```{r}
+v1 <- subset(penguins, penguins$species == "Adelie")
+v2 <- subset(penguins, penguins$species == "Chinstrap")
+v3 <- subset(penguins, penguins$species == "Gentoo")
+
+```
+
+m.  Verify each subset was created correctly.
+```{r}
+v1
+v2
+v3
+```
+
+n.  Find the mean bill length (in mm) of each subset
+```{r}
+mean(penguins$bill_length_mm)
+```
+
+o. On average, which penguins species has the longest bill length (as measured in mm)
+```{r}
+mean(v1$bill_length_mm)
+mean(v2$bill_length_mm)
+mean(v3$bill_length_mm)
+```
+Chinstrap has the longest bill lenghth 
+
+p.  Find the median bill length of each subset
+```{r}
+median(v1$bill_length_mm)
+median(v2$bill_length_mm)
+median(v3$bill_length_mm)
+```
+
+## 2. Visualizing our data
+
+Create three histograms visualizing the distributions of the bill length (in mm) for each species.  Do not forget to label the title, x-axis, and y-axis for each graph.
+
+```{r}
+hist(v1$bill_length_mm)
+
+
+```
+
+```{r}
+hist(v2$bill_length_mm)
+```
+
+```{r}
+hist(v3$bill_length_mm)
+```
+
+## 3.  Variability
+
+The data listed below are measured weights (in pounds) of random samples of the contents in cans of regular Coke and diet Coke. 
+
+a.  Use R to create two vectors: regular (for the values of regular coke) and diet (for the values of diet coke).  
+
+Regular Coke: 0.8192 0.8150 0.8163 0.8211 0.8181 0.8247
+Diet Coke: 0.7773 0.7758 0.7896 0.7868 0.7844 0.7861
+
+```{r}
+regularcoke <- c(0.8192,0.8150,0.8163,0.8211,0.8181,0.8247)
+dietcoke <- c(0.7773,0.7758, 0.7896, 0.7868, 0.7844, 0.7861)
+```
+
+b.  Find the five number summary of regular coke and of diet coke
+```{r}
+# for regular coke
+fivenum(regularcoke)
+```
+For regular coke
+Minimum is 0.814
+1st Q is 0.8163
+median is 0.8165
+3rd Q is 0.82110
+max is 0.82470
+```{r}
+# for diet coke
+fivenum(dietcoke)
+```
+For diet coke
+Minimum is 0.77580
+1st Q is 0.77730
+median is 0.78525
+3rd Q is 0.78680
+max is 0.78960
+
+c.  Create separate boxplots of the distribution of regular coke and the distribution of diet coke
+```{r}
+boxplot(regularcoke)
+boxplot(dietcoke)
+```
+
+d.  Run the following code chunk to plot both boxplots in one graph.  Interpret the graph.
+```{r}
+boxplot(regularcoke,dietcoke)
+```
+
+
+### 4.  
+Run the following code chunk to create a box plot of the body mass of each penguin species.
+```{r}
+# Boxplot of body mass (in g) by penguin species
+boxplot(body_mass_g ~ species,
+        data = penguins, 
+        main="Body Mass (in g) by Penguin Species",
+        xlab="Penguin Species", 
+        ylab="Body Mass (in g)",
+        col = c('coral', 'coral2', 'coral3'))
+```
+
+Based on the boxplot of Body Mass by Penguin Species, answer the following items:  
+
+a.  On average, which species of penguin has the largest body mass?
+Chinstrap
+b.  Which species of penguins has outliers in its calculations?
+Chinstrap
+c.  Not including outliers, which species of penguin has the least amount of variability?
+Gento
+d.  Not including outliers, which species of penguin has the smallest IQR?
+Chinstrap
+ 

@@ -1,0 +1,155 @@
+---
+title: "Lab 4 Homework"
+author: "Sophia Barrett"
+date: "2/19/2022"
+output:
+  word_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+### 1. Loading a data frame
+
+The Palmer penguins data contains size measurements for three penguin species observed on three islands in the Palmer Archipelago, Antarctica. This data is thought to be an alternative to using the iris dataset -- a very widely used dataset first published in work by R A Fisher, a eugenicist with vile and harmful views on race.
+
+
+a.  Load the penguins dataframe by running the code chunk below
+```{r}
+penguins <- read.csv("https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2020/2020-07-28/penguins.csv")
+
+penguins <- na.omit(penguins)  #drops the rows with NA values
+```
+
+b.  Use the `head()` function to verify that the data loaded correctly.
+
+```{r}
+# Enter your code here
+```
+
+c.  Use the `str()` to get more information about the variables in the penguins dataframe.
+
+```{r}
+# Enter your code here
+```
+
+d.  Which of the variables in the penguins dataframe are quantitative?  List them here.
+
+e.  List the qualitative variables in the penguins dataframe.
+
+f.  Which of your qualitative variables can be converted into factors?
+
+g.  Convert those qualitative variables into factors
+```{r}
+# Enter your code here
+```
+
+h.  Check the structure of the variables to verify they are properly coded.
+```{r}
+# Enter your code here
+```
+
+i.  What are the levels of the variable `island`?
+```{r}
+# Enter your code here
+```
+
+j.  Which island has the most penguins?
+```{r}
+# Enter your code here
+```
+
+k.  Create a two-way table of island and species.  Which combination has the most penguins?
+```{r}
+# Enter your code here
+```
+
+l.  Create subsets based on the penguin species.
+```{r}
+# Enter your code here
+```
+
+m.  Verify each subset was created correctly.
+```{r}
+# Enter your code here
+```
+
+n.  Find the mean bill length (in mm) of each subset
+```{r}
+# Enter your code here
+```
+
+o. On average, which penguins species has the longest bill length (as measured in mm) 
+
+
+p.  Find the median bill length of each subset
+```{r}
+# Enter your code here
+```
+
+## 2. Visualizing our data
+
+Create three histograms visualizing the distributions of the bill length (in mm) for each species.  Do not forget to label the title, x-axis, and y-axis for each graph.
+
+```{r}
+# Enter your code here
+```
+
+```{r}
+# Enter your code here
+```
+
+```{r}
+# Enter your code here
+```
+
+## 3.  Variability
+
+The data listed below are measured weights (in pounds) of random samples of the contents in cans of regular Coke and diet Coke. 
+
+a.  Use R to create two vectors: regular (for the values of regular coke) and diet (for the values of diet coke).  
+
+Regular Coke: 0.8192 0.8150 0.8163 0.8211 0.8181 0.8247
+Diet Coke: 0.7773 0.7758 0.7896 0.7868 0.7844 0.7861
+
+```{r}
+# ENTER YOUR CODE HERE
+```
+
+b.  Find the five number summary of regular coke and of diet coke
+```{r}
+# ENTER YOUR CODE HERE
+```
+
+c.  Create separate boxplots of the distribution of regular coke and the distribution of diet coke
+```{r}
+# ENTER YOUR CODE HERE
+```
+
+d.  Run the following code chunk to plot both boxplots in one graph.  Interpret the graph.
+```{r}
+boxplot(regular, diet)
+```
+
+
+### 4.  
+Run the following code chunk to create a box plot of the body mass of each penguin species.
+```{r}
+# Boxplot of body mass (in g) by penguin species
+boxplot(body_mass_g ~ species,
+        data = penguins, 
+        main="Body Mass (in g) by Penguin Species",
+        xlab="Penguin Species", 
+        ylab="Body Mass (in g)",
+        col = c('coral', 'coral2', 'coral3'))
+```
+
+Based on the boxplot of Body Mass by Penguin Species, answer the following items:  
+
+a.  On average, which species of penguin has the largest body mass?
+b.  Which species of penguins has outliers in its calculations?
+c.  Not including outliers, which species of penguin has the least amount of variability?
+d.  Not including outliers, which species of penguin has the smallest IQR?
+ 
