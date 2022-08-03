@@ -1,0 +1,475 @@
+---
+title: "Assignment Fahad"
+author: "Fahad Bin Haji Almotairi"
+date: "26/05/2022"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+```
+
+## Loading data set
+```{r}
+library(dplyr)
+
+```
+
+```{r cars}
+# reading excel files
+library(readxl)
+X2017 <- read_excel("/Users/snawaz/Downloads/r projects from freelanc/as15/2017.csv.xlsx", 
+    sheet = "flares_upstream")
+X2018 <- read_excel("/Users/snawaz/Downloads/r projects from freelanc/as15/2018.csv.xlsx", 
+    sheet = "flares upstream")
+
+X2019 <- read_excel("/Users/snawaz/Downloads/r projects from freelanc/as15/2019.csv.xlsx", 
+    sheet = "flare upstream")
+X2020 <- read_excel("/Users/snawaz/Downloads/r projects from freelanc/as15/2020.csv.xlsx", 
+    sheet = "flare upstream")
+X2021 <- read_excel("/Users/snawaz/Downloads/r projects from freelanc/as15/2021.xlsx", 
+    sheet = "flare upstream")
+
+```
+
+#Filter Upsteam data for important variables , renaming
+
+```{r}
+X2017.UPS = X2017 %>% 
+  filter(ISO_Code == "SAU" | ISO_Code == "SAUKWTNZ") %>%
+  select(ISO_Code, Latitude, Longitude, BCM_2017, Detection_frequency_2017) %>%
+  mutate(Bscf_2017 = BCM_2017 * 35.3174,
+         MMscf_D_2017 = Bscf_2017* 1000 / 365.25,
+         year = 2017,
+         ID_2017 = seq.int(nrow(.)))
+
+
+
+X2018.UPS = X2018 %>% 
+  filter(`ISO Code` == "SAU" | `ISO Code` == "SAUKWTNZ") %>%
+  select(`ISO Code`, Latitude, Longitude, `BCM 2018`, `Detection frequency 2018`) %>%
+  mutate(Bscf_2018 = `BCM 2018` * 35.3174,
+         MMscf_D_2018 = Bscf_2018* 1000 / 365.25,
+         year = 2018,
+         ID_2018 = seq.int(nrow(.)))
+
+str(X2018.UPS)
+
+X2019.UPS = X2019 %>% 
+  filter(`ISO Code` == "SAU" | `ISO Code` == "SAUKWTNZ") %>%
+  rename(c(ISO_Code =`ISO Code`, BCM_2019 = `BCM 2019`, Detection_frequency_2019 = `Detection freq.`)) %>%
+  select(ISO_Code , Latitude, Longitude, BCM_2019, Detection_frequency_2019) %>%
+  mutate(Bscf_2019 = BCM_2019 * 35.3174,
+         MMscf_D_2019 = Bscf_2019* 1000 / 365.25,
+         year = 2019,
+         ID_2019 = seq.int(nrow(.)))
+  
+
+
+
+X2020.UPS = X2020 %>% 
+  filter(`ISO Code` == "SAU" | `ISO Code` == "SAUKWTNZ") %>%
+  rename(c(ISO_Code =`ISO Code`, BCM_2020 = `BCM 2020`, Detection_frequency_2020 = `Detection frequency 2020`)) %>%
+  select(ISO_Code, Latitude, Longitude, BCM_2020, Detection_frequency_2020) %>%
+  mutate(Bscf_2020 = BCM_2020 * 35.3174, 
+         MMscf_D_2020 = Bscf_2020* 1000 / 365.25, 
+         year = 2020, 
+         ID_2020 = seq.int(nrow(.)))
+ 
+X2021.UPS = X2021 %>% 
+  filter(`ISO Code` == "SAU" | `ISO Code` == "SAUKWTNZ") %>%
+  rename(c(ISO_Code =`ISO Code`, BCM_2021 = `BCM 2021`, Detection_frequency_2021 = `Detection frequency 2021`)) %>%
+  select(ISO_Code, Latitude, Longitude, BCM_2021, Detection_frequency_2021) %>%
+  mutate(Bscf_2021 = BCM_2021 * 35.3174, 
+         MMscf_D_2021 = Bscf_2021* 1000 / 365.25, 
+         year = 2020, 
+         ID_2020 = seq.int(nrow(.)))
+
+```
+
+
+# Cross checking 2018 data to previous year 2017
+```{r}
+C = 111139
+distance = vector(mode = "double", length = nrow(X2018.UPS))
+d = vector(mode = "double", length = nrow(X2018.UPS))
+Id_location = vector("double", nrow(X2018.UPS))
+for(i in 1 : nrow(X2018.UPS)) # nolint
+  {
+  Lat = X2018.UPS$Latitude[i]
+  Lon = X2018.UPS$Longitude[i]
+  d = 0
+  for(j in 1 : nrow(X2017.UPS))
+    {
+    a = abs(X2017.UPS$Latitude[j] - Lat) * C
+    b = abs(X2017.UPS$Longitude[j] - Lon) * C
+    d[j] = sqrt( a^2 + b^2)/1000    #distance in km
+    }
+  distance[i]= min(d)
+  Id_location[i] = match(distance[i],d)
+  }
+  
+#summary(distance)
+#sort(distance)
+#sort(Id_location)
+```
+
+
+```{r}
+X2018.A = X2018.UPS %>%
+  mutate(Min_Distance = distance, 
+         ID_location = Id_location,
+         Repeat_Status = 
+           case_when(
+             Min_Distance <= 1 ~ "C",
+             Min_Distance > 1 & Min_Distance < 1.6 ~ "P",
+             Min_Distance >= 1.6 & Min_Distance < 2.0 ~ "S",
+             Min_Distance >= 2.0 ~ "U"),
+         Year_FD = ifelse(Repeat_Status == "U", 2018, 2017))
+```
+
+
+#ways of joining the data set using combination of join and filter dyplr
+
+```{r}
+# 1st: right join only matching IDs with "C" repeat - no duplicates ! 
+# when producing X2018.A and flagging Repeat_Status, some locations are spotted "C" and then "S" - so we only right merge the ones with "C" and second if we chose b/w "P" and "S" we first merge the Possible. 
+# At the end, we check if the ID already exist in the joined data sheet, merge as uniqu location. 
+
+# to apply this technique we iterate between filter and join and filter and join untill we clear all repeat, then we merge unique locations. 
+
+```
+
+# merging colunms by matching ID and only for repeat status C, P and S
+```{r}
+X.meta2 = left_join(X2017.UPS, filter(X2018.A, Repeat_Status !="U"), by = c("ID_2017" = "ID_location")) %>%
+  rename(ISO_Code.x = ISO_Code, Latitude = Latitude.x, Longitude = Longitude.x, Year_FD=year.x , Year_FD.y=Year_FD)
+```
+
+#filtereing for the unique locations in 2018
+```{r}
+unmatched = X2018.A %>%
+  filter(Repeat_Status == "U") %>%
+  select(-year, -ID_location )  # select all columns that are common to 2018
+  #merge(., X.meta2, all.x = T, all.y= T)
+unmatched
+```
+
+# merging unique locations to the rows of previous merged table
+```{r}
+X.meta3 = merge(X.meta2, unmatched, all.x = T, all.y = T)
+X.meta3
+```
+
+#filling na with zero 
+```{r}
+X.meta.Arranged_1 = X.meta3 %>%
+  mutate_all(~replace(., is.na(.), 0)) %>%
+  select(`ISO Code`, Latitude, Longitude, Year_FD, Detection_frequency_2017, Bscf_2017, MMscf_D_2017, `Detection frequency 2018`, Bscf_2018, MMscf_D_2018, Repeat_Status) %>%
+  arrange() %>% rename(R.Status_2018 = Repeat_Status)
+X.meta.Arranged_1
+```
+
+
+```{r}
+X.meta.Arranged_1 %>% 
+  filter(R.Status_2018 == 0) %>%
+  select(Detection_frequency_2017, Bscf_2017) %>%
+  #summarise(., sum(Bscf_2017))
+  summary()
+X.meta.Arranged_1 %>%
+  filter( R.Status_2018 == "U")%>%
+  select(`Detection frequency 2018`, Bscf_2018)
+  
+```
+
+# for 2019 and X.meta3
+
+## Cross checking 2018 data to previous year 2017
+```{r}
+C = 111139
+distance = vector(mode = "double", length = nrow(X2019.UPS))
+d = vector(mode = "double", length = nrow(X2019.UPS))
+Id_location = vector("double", nrow(X2019.UPS))
+for(i in 1 : nrow(X2019.UPS))
+  {
+  Lat = X2019.UPS$Latitude[i]
+  Lon = X2019.UPS$Longitude[i]
+  d = 0
+  for(j in 1 : nrow(X.meta3))
+    {
+    a = abs(X.meta3$Latitude[j] - Lat) * C
+    b = abs(X.meta3$Longitude[j] - Lon) * C
+    d[j] = sqrt( a^2 + b^2)/1000    #distance in km
+    }
+  distance[i]= min(d)
+  Id_location[i] = match(distance[i],d)
+  }
+  
+#summary(distance)
+#sort(distance)
+#sort(Id_location)
+```
+
+
+```{r}
+X2019.A = X2019.UPS %>%
+  mutate(Min_Distance = distance, 
+         ID_location = Id_location,
+         Repeat_Status = 
+           case_when(
+             Min_Distance <= 1 ~ "C",
+             Min_Distance > 1 & Min_Distance < 1.6 ~ "P",
+             Min_Distance >= 1.6 & Min_Distance < 2.0 ~ "S",
+             Min_Distance >= 2.0 ~ "U"),
+         Year_FD = ifelse(Repeat_Status == "U", 2018, 2017)) %>% filter(Repeat_Status=="U")
+
+
+```
+
+
+#ways of joining the data set using combination of join and filter dyplr
+
+
+```{r}
+X.meta4 = left_join(X.meta2, X2019.A, by = c("ID_2019" = "ID_location")) 
+
+
+%>% left_join(X.meta3, filter(X2019.A, Repeat_Status !="U"), by = c("ID_2019" = "ID_location"))
+
+ %>%
+  rename(ISO_Code.x = ISO_Code, Latitude = Latitude.x, Longitude = Longitude.x, Year_FD=year.x , Year_FD.y=Year_FD)
+
+```
+
+#filtereing for the unique locations in 2018
+```{r}
+unmatched = X2019.A %>%
+  filter(Repeat_Status == "U") %>%
+  select(-year, -ID_location )  # select all columns that are common to 2018
+  #merge(., X.meta2, all.x = T, all.y= T)
+unmatched
+```
+
+# merging unique locations to the rows of previous merged table
+```{r}
+X.meta3 = merge(X.meta2, unmatched, all.x = T, all.y = T)
+```
+
+#filling na with zero 
+```{r}
+X.meta.Arranged_2= X.meta3 %>%
+  mutate_all(~replace(., is.na(.), 0)) %>%
+  select(`ISO Code`, Latitude, Longitude, Year_FD, `Detection frequency 2018`, Bscf_2018, MMscf_D_2018, Detection_frequency_2019, Bscf_2019, MMscf_D_2019, Repeat_Status) %>%
+  arrange() %>% rename(R.Status_2019 = Repeat_Status)
+
+```
+
+
+```{r}
+X.meta.Arranged_2 %>% 
+  filter(R.Status_2019 == 0) %>%
+  select(`Detection frequency 2018`, Bscf_2018) %>%
+  #summarise(., sum(Bscf_2017))
+  summary()
+X.meta.Arranged_2 %>%
+  filter( R.Status_2019 == "U")%>%
+  select( Detection_frequency_2019, Bscf_2019)
+  
+```
+
+
+# For 2019-20
+
+
+## Cross checking 2018 data to previous year 2017
+```{r}
+C = 111139
+distance = vector(mode = "double", length = nrow(X2020.UPS))
+d = vector(mode = "double", length = nrow(X2020.UPS))
+Id_location = vector("double", nrow(X2020.UPS))
+for(i in 1 : nrow(X2020.UPS))
+  {
+  Lat = X2020.UPS$Latitude[i]
+  Lon = X2020.UPS$Longitude[i]
+  d = 0
+  for(j in 1 : nrow(X2019.UPS))
+    {
+    a = abs(X2019.UPS$Latitude[j] - Lat) * C
+    b = abs(X2019.UPS$Longitude[j] - Lon) * C
+    d[j] = sqrt( a^2 + b^2)/1000    #distance in km
+    }
+  distance[i]= min(d)
+  Id_location[i] = match(distance[i],d)
+  }
+
+```
+
+
+```{r}
+X2020.A = X2020.UPS %>%
+  mutate(Min_Distance = distance, 
+         ID_location = Id_location,
+         Repeat_Status = 
+           case_when(
+             Min_Distance <= 1 ~ "C",
+             Min_Distance > 1 & Min_Distance < 1.6 ~ "P",
+             Min_Distance >= 1.6 & Min_Distance < 2.0 ~ "S",
+             Min_Distance >= 2.0 ~ "U"),
+         Year_FD = ifelse(Repeat_Status == "U", 2018, 2017))
+
+
+```
+
+
+#ways of joining the data set using combination of join and filter dyplr
+
+
+# merging coloms by matching ID and only for repeat status C, P and S
+```{r}
+X.meta2 = left_join(X2019.UPS, filter(X2020.A, Repeat_Status !="U"), by = c("ID_2019" = "ID_location")) %>%
+  rename(ISO_Code = ISO_Code.x, Latitude = Latitude.x, Longitude = Longitude.x, Year_FD=year.x , Year_FD.y=Year_FD)
+
+```
+
+#filtereing for the unique locations in 2018
+```{r}
+unmatched = X2020.A %>%
+  filter(Repeat_Status == "U") %>%
+  select(-year, -ID_location )  # select all columns that are common to 2018
+  #merge(., X.meta2, all.x = T, all.y= T)
+unmatched
+```
+
+# merging unique locations to the rows of previous merged table
+```{r}
+X.meta3 = merge(X.meta2, unmatched, all.x = T, all.y = T)
+X.meta3
+```
+
+#filling na with zero 
+```{r}
+X.meta.Arranged_3 = X.meta3 %>%
+  mutate_all(~replace(., is.na(.), 0)) %>%
+  select(ISO_Code, Latitude, Longitude, Year_FD, Detection_frequency_2019, Bscf_2019, MMscf_D_2019, Detection_frequency_2020, Bscf_2020, MMscf_D_2020, Repeat_Status) %>%
+  arrange() %>% rename(R.Status_2020 = Repeat_Status)
+
+```
+
+
+```{r}
+X.meta.Arranged_3 %>% 
+  filter(R.Status_2020 == 0) %>%
+  select(Detection_frequency_2019, Bscf_2019) %>%
+  #summarise(., sum(Bscf_2017))
+  summary()
+X.meta.Arranged_3 %>%
+  filter( R.Status_2020 == "U")%>%
+  select( Detection_frequency_2020, Bscf_2020)
+  
+```
+
+
+# for 2020-21
+
+## Cross checking 2018 data to previous year 2017
+```{r}
+C = 111139
+distance = vector(mode = "double", length = nrow(X2021.UPS))
+d = vector(mode = "double", length = nrow(X2021.UPS))
+Id_location = vector("double", nrow(X2021.UPS))
+for(i in 1 : nrow(X2021.UPS))
+  {
+  Lat = X2021.UPS$Latitude[i]
+  Lon = X2021.UPS$Longitude[i]
+  d = 0
+  for(j in 1 : nrow(X2020.UPS))
+    {
+    a = abs(X2020.UPS$Latitude[j] - Lat) * C
+    b = abs(X2020.UPS$Longitude[j] - Lon) * C
+    d[j] = sqrt( a^2 + b^2)/1000    #distance in km
+    }
+  distance[i]= min(d)
+  Id_location[i] = match(distance[i],d)
+  }
+
+```
+
+
+```{r}
+X2021.A = X2021.UPS %>%
+  mutate(Min_Distance = distance, 
+         ID_location = Id_location,
+         Repeat_Status = 
+           case_when(
+             Min_Distance <= 1 ~ "C",
+             Min_Distance > 1 & Min_Distance < 1.6 ~ "P",
+             Min_Distance >= 1.6 & Min_Distance < 2.0 ~ "S",
+             Min_Distance >= 2.0 ~ "U"),
+         Year_FD = ifelse(Repeat_Status == "U", 2018, 2017))
+
+
+```
+
+
+#ways of joining the data set using combination of join and filter dyplr
+
+
+# merging coloms by matching ID and only for repeat status C, P and S
+```{r}
+X.meta2 = left_join(X2021.UPS, filter(X2020.A, Repeat_Status !="U"), by = c("ID_2020" = "ID_location")) %>%
+  rename(ISO_Code = ISO_Code.x, Latitude = Latitude.x, Longitude = Longitude.x, Year_FD=year.x , Year_FD.y=Year_FD)
+
+
+```
+
+#filtereing for the unique locations in 2018
+```{r}
+unmatched = X2021.A %>%
+  filter(Repeat_Status == "U") %>%
+  select(-year, -ID_location )  # select all columns that are common to 2018
+  #merge(., X.meta2, all.x = T, all.y= T)
+unmatched
+```
+
+# merging unique locations to the rows of previous merged table
+```{r}
+X.meta3 = merge(X.meta2, unmatched, all.x = T, all.y = T)
+X.meta3
+```
+
+#filling na with zero 
+```{r}
+X.meta.Arranged_4 = X.meta3 %>%
+  mutate_all(~replace(., is.na(.), 0)) %>%
+  select(ISO_Code, Latitude, Longitude, Year_FD, Detection_frequency_2020, Bscf_2020, MMscf_D_2020, Detection_frequency_2021, Bscf_2021, MMscf_D_2021, Repeat_Status) %>%
+  arrange() %>% rename(R.Status_2021 = Repeat_Status)
+
+```
+
+
+```{r}
+X.meta.Arranged_4 %>% 
+  filter(R.Status_2021 == 0) %>%
+  select(Detection_frequency_2020, Bscf_2020) %>%
+  #summarise(., sum(Bscf_2017))
+  summary()
+X.meta.Arranged_4 %>%
+  filter( R.Status_2021 == "U")%>%
+  select( Detection_frequency_2021, Bscf_2021)
+  
+```
+
+```{r}
+
+X.meta.Arranged_2 <- X.meta.Arranged_2 %>% rename(c(ISO_Code =`ISO Code`))
+
+X.meta.Arranged_1 <- X.meta.Arranged_1 %>% rename(c(ISO_Code =`ISO Code`))
+
+x <- left_join(X.meta.Arranged_1, X.meta.Arranged_2, by = c("ISO_Code"))
+metatable <- left_join(x, X.meta.Arranged_3,X.meta.Arranged_4, by = c("ISO_Code"))
+metatable 
+```
+
+
