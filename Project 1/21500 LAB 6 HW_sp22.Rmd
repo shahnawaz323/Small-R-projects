@@ -1,0 +1,233 @@
+---
+title: '21500 Lab 6 HW: Correlations and Scatterplots'
+author: "Saifeldin Fathelbab"
+output: word_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## HOMEWORK
+
+We will use the Palmer Penguins dataset for the following items:
+
+In a new R Markdown file:
+
+1.  Load your necessary libraries (tidyverse and corrplot)
+
+```{r}
+library(tidyverse)
+library(corrplot)
+```
+
+2.  Load the penguin dataset by running this code chunk:
+
+```{r}
+penguins <- read.csv("https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2020/2020-07-28/penguins.csv")
+head(penguins)
+```
+
+3. Run the following code to remove rows with missing data:
+
+```{r}
+penguins <-
+  penguins %>% 
+  drop_na()
+
+head(penguins)
+  
+```
+
+
+4.  Make a scatterplot of bill length and flipper length?  Describe the relationship between bill length and flipper length in our penguin data.
+
+```{r}
+
+plot(penguins$bill_length_mm,penguins$flipper_length_mm,data=penguins,xlab="Bill Length (mm)",ylab="Flipper Length (mm)")
+
+```
+
+## Observation
+* With the increase in bill length, flipper length is also increasing. 
+* In the given dataset, there is very small percentage of penguins who have bill length greater than 55 mm and less than 35 mm.
+* Overall for all species, the dataset has wide range for both bill and flipper lengths and data is not concentrated at one point. 
+
+
+5.  What is the correlation between bill length and flipper length?
+```{r}
+cor(penguins$bill_length_mm,penguins$flipper_length_mm)
+```
+
+
+6.  What is the PERCENT of variance accounted between ($r^2$ as a percent) for bill length and flipper length    ?  Round your final answer to 2 decimal places. 
+
+```{r}
+r2 <- cor(penguins$bill_length_mm,penguins$flipper_length_mm)^2
+
+r2 <- r2*100
+
+round(r2,2)
+```
+
+
+7. Run the following code?  Describe the resulting plot. Why are there three color codes given in the code?  What does this graph tell you about the relationship between the length of the bills and the length of the flippers in these 3 species of penguins?
+
+```{r}
+penguins$species <- as.factor(penguins$species)
+
+my_cols <- c("#00AFBB", "#E7B800", "#FC4E07") 
+
+plot(penguins$bill_length_mm, penguins$flipper_length_mm, 
+     col = my_cols[penguins$species])
+```
+
+
+## Observation and explanation of relationship:
+
+
+* There is very small number of species which are intermixed with each other in terms of bill length and flipper. 
+* There is higher chance that penguins from same species have similar bill and flipper lengths. 
+* One of the species have higher flipper length as compared to others.
+* Only 1 penguin has bill length of approx 60 mm and flipper length of 230mm which is highest among all species.  
+
+
+Q: Why three colors codes?
+
+
+Answer: It is because we have 3 species in the dataset so we want to give the `col` option in the plot function a three elements vector in order to show three colors. It is required that the number of elements of the vector `my_cols` are equal to the number of categories in the `col` command otherwise we get an error. 
+
+
+
+8.  Refer to lab 4.  Make a filter for each species of penguin (you did this for lab 4 HW so you can copy and paste your code).  Then, using each of the created filters, plot the relationship between bill length and flipper length.
+
+```{r}
+df <- subset(penguins, penguins$species == "Chinstrap")
+
+plot(penguins$bill_length_mm,penguins$flipper_length_mm,data=df, xlab="Bill Length (mm)",ylab="Flipper Length (mm)")
+
+```
+
+
+
+```{r}
+df <- subset(penguins, penguins$species == "Gentoo")
+
+plot(penguins$bill_length_mm,penguins$flipper_length_mm,data=df, xlab="Bill Length (mm)",ylab="Flipper Length (mm)")
+```
+
+
+```{r}
+df <- subset(penguins, penguins$species == "Adelie")
+plot(penguins$bill_length_mm,penguins$flipper_length_mm,data=df, xlab="Bill Length (mm)",ylab="Flipper Length (mm)")
+```
+
+9.  Use your answers in #7 to match the colors in the graph to the species of penguin.  
+
+```{r}
+plot(penguins$bill_length_mm, penguins$flipper_length_mm, 
+     col = penguins$species)
+```
+
+10.  Modify the code in #7 to add the appropriate title to the graph.  
+
+```{r}
+my_cols <- c("#00AFBB", "#E7B800", "#FC4E07") 
+plot(penguins$bill_length_mm, penguins$flipper_length_mm, 
+     col = my_cols[penguins$species],main="Relationship between Bill length and Flipper length for 3 species of Penguins")
+```
+
+11.  Run a correlation matrix on the penguin_matrix data.  Round the values to 3 decimal places.  What is the strongest relationship you see in this correlation matrix?  Does it match with your prediction from the scatterplot matrix?
+
+```{r}
+
+numeric_columns <- penguins[,c(3,4,5,6,8)]  
+
+cor_matrix <- cor(numeric_columns)
+
+round(cor_matrix,3)
+```
+
+## Observation:
+
+
+* Strongest relationship exists between `body_mass_g` and `flipper_length_mm` for all the penguins because the corelation coefficient value is 0.873 as compared to all other values in the corelation matrix given above.
+* It does not match with our scatterplot matrix since we have used `bill_length_mm` and `flipper_length_mm` before. The value we got for these two variables is lower than `body_mass_g` and `flipper_length_mm`. 
+
+
+
+12.  Is there a significant relationship between bill length and flipper length?  Run a hypothesis test on this correlation and give an APA summary of your findings.
+
+```{r}
+t.test(penguins$bill_length_mm,penguins$flipper_length_mm)
+```
+
+
+## Observation:
+
+
+In order to test the significant relationship between `bill_length_mm` and `flipper_length_mm` we conduct t-test. It is requirement for t-test that we define 2 hypothesis which are given as
+
+*Null hypothesis $H_0$:* There is no significant difference between mean value of bill length and flipper length for penguins.
+*Alternate Hypothesis $H_A$:* There is significant difference between mean value of bill length and flipper length for penguins.
+
+The acceptance of null or alternate hypothesis depends upon the p-value which is based upon the significance level $\alpha$ . So at 5% significance level, our p-value from the t-test is <0.05 which means that we reject our null hypothesis and accept the alternate hypothesis. If it was other way around i.e p-value >0.05, the null hypothesis would have been accepted.
+
+In other words we can say that there is significant difference between the means of bill length and flipper length. Remember that our observation is based upon 95% Confidence interval.
+
+
+13.  Visualize the penguin_matrix data using the corrgram of your choice.  Do you find the corrgram to be an effective way to visualize the data? Explain.
+
+```{r}
+pairs(numeric_columns,    
+      labels = colnames(numeric_columns),  
+      pch = 21,       
+      bg = rainbow(3)[penguins$species],  
+      col = rainbow(3)[penguins$species], 
+      main = "Penguins dataset",
+      row1attop = TRUE,   
+      gap = 1,          
+      cex.labels = NULL,      
+      font.labels = 1)
+```
+
+
+## Observation
+
+
+Yes `corrgram` is an effective way of finding relationship between numerical data in a given dataset. It can help us visualize the corelation matrix from question 11 in graphical form. From the above graph we can deduce that there are several variables which have positive corelation with each other since there is an increasing trend of scatterplot points between variables. For example the variables which have positive corelation with each other are `body_mass_g` and `flipper_length_mm` for all species. Similarly the variables `bill_length_mm` and `body_mass_g` have almost positive corelation.. It can also help us to determine which numeric variables have negative or no corelation with each other. In the above graph we can see that `year` numeric variable is not linked to any of the other numeric varibles and has a flat line coressponding to y-axis. 
+
+### EXTRA CREDIT:
+
+a.  Use ggplot2 to create a scatterplot of the relationship between bill length and flipper length, colored by species
+
+```{r}
+
+library(ggplot2)
+
+ggplot(penguins) +
+ aes(x = bill_length_mm, y = flipper_length_mm, colour = species) +
+ geom_point(shape = "square cross", 
+ size = 2L) +
+ scale_color_hue(direction = 1) +
+ labs(x = "Bill Length (mm)", y = "Flipper Length (mm)") +
+ ggthemes::theme_base() +
+ theme(legend.position = "bottom")
+
+```
+
+b.  Use ggplot2 to create a scatterplot of the relationship between bill length and flipper length, faceted by species
+
+```{r}
+
+ggplot(penguins) +
+ aes(x = bill_length_mm, y = flipper_length_mm) +
+ geom_point(shape = "square cross", 
+ size = 1.5, colour = "#112446") +
+ labs(x = "Bill Length (mm)", y = "Flipper Length (mm)") +
+ ggthemes::theme_base() +
+ facet_wrap(vars(species))
+
+```
+
+
