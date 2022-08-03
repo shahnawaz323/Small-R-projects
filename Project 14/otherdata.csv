@@ -1,0 +1,94 @@
+name,species,size,time,health,income
+fluffy,owl,small,t1,81,120.67
+kevin clark,string,small,t1,79,108
+little blue,penguin,small,t1,71,77.33
+little owl,owl,small,t1,55,88.67
+sissily,snake,small,t1,81,140.67
+sizzley,snake,small,t1,51,NA
+whitey,bunny,small,t1,74,116.67
+bluekeet,parakeet,small,t1,86,113.33
+cuddly,bear,medium,t1,74,89.33
+kevin,guitar,medium,t1,76,124
+little hugo,hippo,medium,t1,66,89.33
+owl,owl,medium,t1,69,101.33
+penguin,penguin,medium,t1,97,160
+rabbit,bunny,medium,t1,70,85.33
+redkeet,parakeet,medium,t1,95,175.33
+snowy,owl,medium,t1,85,98
+super eyes,owl,medium,t1,67,93.33
+bear bear,bear,medium,t1,77,98
+big bunny,bunny,large,t1,75,66
+big owl,owl,large,t1,100,128.67
+bluey,bunny,large,t1,72,98
+hippo,hippo,large,t1,62,108
+hugo,hippo,large,t1,100,98
+jeff,elephant,large,t1,76,101.33
+pinky,bunny,large,t1,70,130
+pouncy,tiger,large,t1,91,79.33
+rainbow,unicorn,large,t1,85,113.33
+waddly,penguin,large,t1,79,96.67
+zebra,zebra,enormous,t1,63,47.33
+dumbo,elephant,enormous,t1,66,74.67
+super size,bear,enormous,t1,82,110
+fluffy,owl,small,t2,79,128.86
+kevin clark,string,small,t2,75,111.45
+little blue,penguin,small,t2,67,89.41
+little owl,owl,small,t2,50,94.73
+sissily,snake,small,t2,79,142.32
+sizzley,snake,small,t2,50,79.91
+whitey,bunny,small,t2,72,117.65
+bluekeet,parakeet,small,t2,84,114.32
+cuddly,bear,medium,t2,69,101.57
+kevin,guitar,medium,t2,71,133.15
+little hugo,hippo,medium,t2,62,101.73
+owl,owl,medium,t2,65,101.94
+penguin,penguin,medium,t2,95,159.64
+rabbit,bunny,medium,t2,NA,81.56
+redkeet,parakeet,medium,t2,93,182.82
+snowy,owl,medium,t2,80,97.62
+super eyes,owl,medium,t2,63,80.08
+bear bear,bear,medium,t2,73,102.09
+big bunny,bunny,large,t2,68,69.58
+big owl,owl,large,t2,95,133.22
+bluey,bunny,large,t2,66,101.09
+hippo,hippo,large,t2,54,106.07
+hugo,hippo,large,t2,93,115.28
+jeff,elephant,large,t2,70,101.04
+pinky,bunny,large,t2,61,139.93
+pouncy,tiger,large,t2,76,82.67
+rainbow,unicorn,large,t2,79,116.33
+waddly,penguin,large,t2,77,91.9
+zebra,zebra,enormous,t2,55,50.96
+dumbo,elephant,enormous,t2,59,79.76
+super size,bear,enormous,t2,71,110.79
+fluffy,owl,small,t3,73,85.65
+kevin clark,string,small,t3,70,118.83
+little blue,penguin,small,t3,59,128.96
+little owl,owl,small,t3,50,87.6
+sissily,snake,small,t3,74,77.06
+sizzley,snake,small,t3,48,169.32
+whitey,bunny,small,t3,67,136
+bluekeet,parakeet,small,t3,80,79.62
+cuddly,bear,medium,t3,66,77.82
+kevin,guitar,medium,t3,62,113.61
+little hugo,hippo,medium,t3,55,98.27
+owl,owl,medium,t3,52,40.59
+penguin,penguin,medium,t3,89,165.61
+rabbit,bunny,medium,t3,61,138.68
+redkeet,parakeet,medium,t3,88,90.38
+snowy,owl,medium,t3,78,100.79
+super eyes,owl,medium,t3,55,40.51
+bear bear,bear,medium,t3,70,150.31
+big bunny,bunny,large,t3,62,98.01
+big owl,owl,large,t3,83,103.18
+bluey,bunny,large,t3,57,88.03
+hippo,hippo,large,t3,42,53.97
+hugo,hippo,large,t3,85,88.9
+jeff,elephant,large,t3,68,77.02
+pinky,bunny,large,t3,49,67.62
+pouncy,tiger,large,t3,69,135.76
+rainbow,unicorn,large,t3,72,112.77
+waddly,penguin,large,t3,68,108.41
+zebra,zebra,enormous,t3,46,139.06
+dumbo,elephant,enormous,t3,44,111.22
+super size,bear,enormous,t3,63,58.84

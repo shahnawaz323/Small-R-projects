@@ -1,0 +1,218 @@
+---
+title: "RMHI/ARMP Assignment"
+author: " [Word Count: XX]"
+output: word_document
+---
+
+Please put your answers here, following the instructions in the assignment description. Do not change the arguments at the top of the code chunks, and put your answers and word count tallies in the locations indicated. Remember to knit as you go, and submit the knitted version of this on Canvas.
+
+```{r setup, include=FALSE, warning=FALSE}
+# We'll begin by loading up the libraries and data we need, as always.
+knitr::opts_chunk$set(echo = TRUE)
+
+# loading the libraries
+library(tidyverse)
+library(here)
+library(ggplot2)
+library(lsr)
+library(RColorBrewer)
+
+do <- read_csv(file=here("others.csv"))
+dh <- read_csv(file=here("testresults.csv"))
+dh2 <- read_csv(file=here("testresults2.csv"))
+dp <- read_csv(file=here("problems.csv"))
+dd <- read_csv(file=here("otherdata.csv"))
+dd_sum2 <- read_csv(file=here("otherdata_sum.csv"))
+```
+
+
+## Q1 
+
+```{r q1}
+do_new <- do %>% rowwise() %>% mutate(morescary = if_else(scariness>loudness,"TRUE","FALSE")) %>% mutate(personality = mean(c(scariness,loudness)))  %>% select(-c(scariness,loudness))
+
+tibble(do_new)
+```
+
+
+## Q2 
+
+```{r q2}
+
+dh_new <- pivot_longer(dh,cols=c("lfb",  "rainbow" , "diff" ),names_to = 'what',values_to='score')
+ 
+
+dh_new            
+```
+
+
+## Q3
+
+```{r q3, warning=FALSE}
+ggplot(dh_new) +
+ aes(x = score, fill = what) +
+ geom_histogram(bins = 30L) +
+ scale_fill_hue(direction = 1) +
+ labs(x = "Score of each question", y = "No. of observations", title = "1D distibution of 3 answers from all groups", 
+ fill = "Answers") +
+ ggthemes::theme_base() +
+ theme(legend.position = "bottom") +
+ facet_wrap(vars(what), 
+ scales = "free_x")
+
+```
+
+
+## Q4
+
+```{r q4}
+a <- dh_new %>% filter(what=='lfb') 
+
+lapply(a['score'], shapiro.test)
+
+b <- dh_new %>% filter(what=='rainbow') 
+
+lapply(b['score'], shapiro.test)
+
+c <- dh_new %>% filter(what=='diff') 
+
+lapply(c['score'], shapiro.test)
+```
+
+*ANSWER: The Shapiro wilk normality test is performa=ed to check normality of the test for three classes. We can deduce the normality based on 2 hypothesis as;
+Null hypothesis H0: Data is normal 
+Alternate hypothesis HA: Data is not normal 
+
+When we use these hypothesis on the 3 score values for 3 classes we observe that none of the class has normalized score at 5% significance level since p-value > $alpha$ so we reject our null hypothesis that data is normal. [Word Count: XX]*
+
+
+## Q5
+
+```{r q5}
+t.test(a['score'],b['score'])
+
+```
+
+*ANSWER: We have used t-test to compare answers of rainbow and LFB with hypothesis that
+Null hypothesis H0: Mean scores for LFB is significantly different than rainbow
+Alternate Hypothesis:  Mean scores for LFB is are significantly different than rainbow.
+We get p-value > 0.05 (5% significance level) so we deduce that score of LFB and rainbow are significantly different and we reject our null hypothesis. The size of sample is 120 which is not an appropriate size of sample out of population for t hypothesis test and it could be a reason for such a high p-value. [Word Count: XX]*
+
+
+## Q6
+
+*ANSWER: (a) Put your answer here. (b) Put your answer here. [Word Count: XX]*
+
+
+## Q7
+
+```{r q7}
+
+a = table(dp$problem, dp$improved) 
+chisq.test(a)
+```
+
+*ANSWER: We have applied the chi-square test to test two of following hypothesis
+Null hypothesis H0: The Distribution of health problem is not significantly different than govt standard
+Alternate hypothesis HA: The Distribution of health problems is significantly different than govt standard
+
+From the result of our test we reject our null hypothesis since p-value > 5% significance level. Note that degrees of freedom here is 2 which is n-1 according to no. of health problems. 
+
+. [Word Count: XX]*
+
+
+## Q8
+
+```{r q8}
+
+pt(0.8,133)
+
+
+```
+
+*ANSWER: The probability of seeing 134 or more non-food visits is _78___%.*
+
+
+*ANSWER: The calculated probability of 78% shows that the area under a t-curve in t distribution curve is on the we have 78% area covered and only 10% area remains on the left tail. We can calculate the probability by qt function as `1-pt(0.8,133)` well which will given the remaiining 10% probability of curve on the right side of the t-curve. Remember that the seconf argument is degrees of freedom which is equal to n-1 where n= sample size. [Word Count: XX]*
+
+
+## Q9
+
+```{r q9}
+dd_sum <- dd %>% group_by(size,time) %>% summarise(mean(health),median(health),sd(health)) 
+
+colnames(dd_sum) <- c("size"  ,     "time"  ,     "meanHealth", "mdnHealth" , "sdHealth" )
+dd_sum
+```
+
+
+## Q10
+
+```{r q10, warning=FALSE}
+
+ggplot(dd_sum2) +
+ aes(x = time, fill = time, weight = meanHealth) +
+ geom_bar(color="black") +
+ scale_fill_brewer(palette = "Blues", 
+ direction = 1) +
+ labs(x = "Time", y = "Health") +
+ ggthemes::theme_base() +
+ facet_wrap(vars(size))+  geom_errorbar(aes(ymin=min(dd_sum2$sdHealth),ymax=max(dd_sum2$meanHealth)), width=.2,  position=position_dodge(.9))
+```
+
+*ANSWER: The highest health count is for the large size people. and average is around 60 for all times. [Word Count: XX]*
+
+
+## Q11
+
+```{r q11}
+
+ggplot(dd) +
+ aes(x = income, y = health, fill = size) +
+ geom_point(shape = "circle filled", size = 3L, 
+ colour = "#112446") +
+ scale_fill_hue(direction = 1) +
+ labs(x = "Income of participant", y = "Health probelm") +
+ ggthemes::theme_base() +
+ facet_wrap(vars(size))
+
+```
+
+*ANSWER: In the dd dataset we observe that there are full types of species from enormous to small based on their size. We have tried to get a trend out of the dataset using the facet plots with point graph. The graph above shows that there are quite a mix of sizes in all the sample dataset. The independent variables in our graph is income linked to depedent variables health rating. We can observe that for the persons with large size the health rating is higher as compared to enormous and small size persons. In all the cases a cluster formation is observed around a value where certian range of income. We can't explicitly say that there is linear trend between the income and health rating for the participants. Overall highest rating is observed for the large persons with medium income of 80-120. 
+
+
+## Q12
+
+*ANSWER: (a) _Y__ (b) ___ (c) Put your answer here. [Word Count: XX]*
+
+
+## Q13
+
+*ANSWER: 
+
+(a) t-test does not depend upon sample size. This is the reason t-statistics value is same in all cases. Although the sample size changes the mean value between 2 groups which is checked and corelated by t-test.     
+
+(b) A negative t-value shows a reversal in the directionality of the effect being studied yet it has no effect on p-value which is generally taken at 5% significance level. t value with negative or positive sign are same except that the curve we are taking value form the negative side of the curve. If we get t-value negative it means we can reject null hypothesis. It also indicates that in the formula of t-test Foxy have put lower mean before the large mean. [Word Count: XX]*
+
+
+## Q14
+
+*ANSWER: p an alpha values are used in hypothesis tests to accept or reject null hypothesis. The first statement with p=0.4 is correct that probability of getting null hypothesis equal to true is 40% and 60% for ejecting null hypothesis. Whenever p-value is greater than alpha (significance level) we reject the null hypothesis. Another parameter in hypothesis test is the confidence interval which is normally chosen as 95%. When we get such a large p-value even if we have set alpha = 0.05 we accept the null hypothesis. Regarding the second statement Type i error can be reduced by choosing less value for alpha. If we set alpha=0.01 it means we have 1% chance of rejecting null hypothesis and after hypothesis test we can accept the null hypothesis even if p comes out to be 0.02.   [Word Count: XX]*
+
+
+## Q15
+
+*ANSWER: Type I error occurs when result is false positive and Type II error occurs when result is false negative. alpha is probability of committing type I error while beta is probability of committing type II error. When we assume that alpha=0.05 it means we are expecting a probability of 5% error. Generally we do not know at the initial stage that we should reject null hypothesis which helps to use alpha and beta together. With large alpha we can afford to make type I error and vice versa for beta. The beta value for alpha 0.05 is 0.2. When sample size is large enough (more than 30) we can use z-test for hypothesis testing. With regards to effect size we do not have control over it. With the increase in effect size the sampling distribution moves from null. 
+
+
+## Q16
+
+*ANSWER: I would like to 
+* solve the health problems for the participants.
+* Improve their statistics knowledge.
+* Increase health rating of the participants 
+* Get more data with more species.
+* Remove the scariness from the persons 
+
+
+
