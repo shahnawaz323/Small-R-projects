@@ -1,0 +1,293 @@
+---
+title: "BALANGA Q2"
+output: word_document
+date: '2022-06-08'
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE,message = FALSE)
+```
+
+
+
+```{r}
+
+#setwd("~/Desktop/PH23- BIOSTATISTIC/report/BIOS Report/R markdown files")
+```
+
+
+```{r}
+library(readxl)
+library(data.table)
+library(knitr)
+library(tidyverse)
+library(stringr)
+library(flextable)
+
+neonatal <- read_excel("neonatal.xlsx")
+format(head(neonatal))
+
+set_flextable_defaults(
+  font.size = 10, font.family = "Helvetica",
+  font.color = "#333333",
+  table.layout = "fixed",
+  border.color = "gray",
+  padding.top = 3, padding.bottom = 3,
+  padding.left = 4, padding.right = 4)
+```
+
+## Loading dataset
+number of observations are given by which is total size of the population
+```{r}
+nrow(neonatal)
+```
+
+## Knowing the data types in the dataframe 
+
+
+```{r}
+format(glimpse(neonatal))
+```
+
+so all the columns are character variables except the birthweight
+We need to characterize the data accordinf to three groups in bmicat which can be done bu diving the bmi column and filtering rows with condition.
+
+
+## identifying the unique values in the bmicat column
+```{r}
+unique(neonatal$bmicat)
+
+```
+
+There are three unique values which means we have 3 groups in the bmicat column. 
+Now we are going to classify the three groups. 
+
+## Classifying in 3 groups 
+
+```{r}
+obese  <- neonatal  %>% filter(bmicat %in% c("30-34.9(obese)"))
+
+severely_obese  <- neonatal  %>% filter(bmicat %in% c("35-39.9 (severly obese)"))
+
+morbidly_obese  <- neonatal  %>% filter(bmicat %in% c(">=40 (morbidly obese)"))
+
+```
+
+
+## Finding mean and standard deviation of the each group alongwith overall population
+
+For the class of obese patients, we need to find the number of patients who were admitted to the NICU at birth and their mean and standard deviation. 
+In the below chunk we are calculating the median and the IQR of the birthweight of the class of all 3 groups of patients as well as the mean median of all groups in the form of a table 
+
+```{r}
+#
+
+df1 <- data.frame(
+  "Groups" = c("Obese", "Severly Obese", "Morbidly Obese","All"),
+  c(mean(obese$birthweight),mean(severely_obese$birthweight),mean(morbidly_obese$birthweight),mean(neonatal$birthweight)),
+  c(sd(obese$birthweight),sd(severely_obese$birthweight),sd(morbidly_obese$birthweight),sd(neonatal$birthweight)),  
+  c(IQR(obese$gestationalage), IQR(severely_obese$gestationalage), IQR(morbidly_obese$gestationalage),IQR(neonatal$gestationalage)),
+  c(median(obese$gestationalage), median(severely_obese$gestationalage), median(morbidly_obese$gestationalage),median(neonatal$gestationalage)))  
+
+
+ df1 <-  setNames(df1,c("Groups","mean","SD","IQR","median")) 
+kable(df1)
+```
+
+With regards to the LGA we can calculate the percentage by classifying into 2 groups. before hand we can identify if the groups are more than 2 in LGA by using unique command. 
+
+## percentage of LGA 
+```{r}
+unique(neonatal$lga)
+
+df2 <- data.frame(
+    "Groups" = c("Obese", "Severly Obese", "Morbidly Obese","All"),
+
+c(obese %>% filter(lga %in% c("normalsize")) %>% nrow()/nrow(obese)*100,
+severely_obese %>% filter(lga %in% c("normalsize")) %>% nrow()/nrow(severely_obese)*100,
+ morbidly_obese %>% filter(lga %in% c("normalsize")) %>% nrow()/nrow(morbidly_obese)*100,
+ neonatal %>% filter(lga %in% c("normalsize")) %>% nrow()/nrow(neonatal)*100),
+
+
+c(obese %>% filter(lga %in% c("LGA")) %>% nrow()/nrow(obese)*100,
+severely_obese %>% filter(lga %in% c("LGA")) %>% nrow()/nrow(severely_obese)*100,
+morbidly_obese %>% filter(lga %in% c("LGA")) %>% nrow()/nrow(morbidly_obese)*100,
+neonatal %>% filter(lga %in% c("LGA")) %>% nrow()/nrow(neonatal)*100),
+
+c(obese %>% filter(lga %in% c("normalsize")) %>% nrow(),
+severely_obese %>% filter(lga %in% c("normalsize")) %>% nrow(),
+ morbidly_obese %>% filter(lga %in% c("normalsize")) %>% nrow(),
+ neonatal %>% filter(lga %in% c("normalsize")) %>% nrow()),
+
+c(obese %>% filter(lga %in% c("LGA")) %>% nrow(),
+severely_obese %>% filter(lga %in% c("LGA")) %>% nrow(),
+morbidly_obese %>% filter(lga %in% c("LGA")) %>% nrow(),
+neonatal %>% filter(lga %in% c("LGA")) %>% nrow())
+)
+
+df2 <- setNames(df2,c("Groups","normalsize %","lga %","number of normalsize","number of lga"))
+flextable(df2)
+
+```
+
+
+# percentage of Hypoglycaemia
+Now for the Hypoglycaemia we can calculate the percentage.
+```{r}
+df3  <- data.frame(
+    "Groups" = c("Obese", "Severly Obese", "Morbidly Obese","All"),
+    c(obese %>% filter(hypoglycaemia %in% c("Yes")) %>% nrow()/nrow(obese)*100,
+    severely_obese %>% filter(hypoglycaemia %in% c("Yes")) %>% nrow()/nrow(severely_obese)*100,
+    morbidly_obese %>% filter(hypoglycaemia %in% c("Yes")) %>% nrow()/nrow(morbidly_obese)*100,
+    neonatal %>% filter(hypoglycaemia %in% c("Yes")) %>% nrow()/nrow(neonatal)*100),
+
+    c(obese %>% filter(hypoglycaemia %in% c("No")) %>% nrow()/nrow(obese)*100,
+    severely_obese %>% filter(hypoglycaemia %in% c("No")) %>% nrow()/nrow(severely_obese)*100,
+    morbidly_obese %>% filter(hypoglycaemia %in% c("No")) %>% nrow()/nrow(morbidly_obese)*100,
+    neonatal %>% filter(hypoglycaemia %in% c("No")) %>% nrow()/nrow(neonatal)*100),
+    
+    c(obese %>% filter(hypoglycaemia %in% c("Yes")) %>% nrow(),
+    severely_obese %>% filter(hypoglycaemia %in% c("Yes")) %>% nrow(),
+    morbidly_obese %>% filter(hypoglycaemia %in% c("Yes")) %>% nrow(),
+    neonatal %>% filter(hypoglycaemia %in% c("Yes")) %>% nrow()),
+
+    c(obese %>% filter(hypoglycaemia %in% c("No")) %>% nrow(),
+    severely_obese %>% filter(hypoglycaemia %in% c("No")) %>% nrow(),
+    morbidly_obese %>% filter(hypoglycaemia %in% c("No")) %>% nrow(),
+    neonatal %>% filter(hypoglycaemia %in% c("No")) %>% nrow())
+    
+    )
+
+    df3  <-  setNames(df3,c("Groups","yes %","no %","number for yes","number for no"))
+
+kable(df3)
+
+```
+
+For the NICU admission at birth we can calculate it's percentage by the code below
+
+# percentage of Admissions
+```{r}
+df4  <- data.frame(
+
+    "Groups" = c("Obese", "Severly Obese", "Morbidly Obese","All"),
+    c(obese %>% filter(admission %in% c("Yes")) %>% nrow()/nrow(obese)*100,
+    severely_obese %>% filter(admission %in% c("Yes")) %>% nrow()/nrow(severely_obese)*100,
+    morbidly_obese %>% filter(admission %in% c("Yes")) %>% nrow()/nrow(morbidly_obese)*100,
+    neonatal %>% filter(admission %in% c("Yes")) %>% nrow()/nrow(neonatal)*100),
+
+    c(obese %>% filter(admission %in% c("No")) %>% nrow()/nrow(obese)*100,
+    severely_obese %>% filter(admission %in% c("No")) %>% nrow()/nrow(severely_obese)*100,
+    morbidly_obese %>% filter(admission %in% c("No")) %>% nrow()/nrow(morbidly_obese)*100,
+    neonatal %>% filter(admission %in% c("No")) %>% nrow()/nrow(neonatal)*100),
+    
+    c(obese %>% filter(admission %in% c("Yes")) %>% nrow(),
+    severely_obese %>% filter(admission %in% c("Yes")) %>% nrow(),
+    morbidly_obese %>% filter(admission %in% c("Yes")) %>% nrow(),
+    neonatal %>% filter(admission %in% c("Yes")) %>% nrow()),
+
+    c(obese %>% filter(admission %in% c("No")) %>% nrow(),
+    severely_obese %>% filter(admission %in% c("No")) %>% nrow(),
+    morbidly_obese %>% filter(admission %in% c("No")) %>% nrow(),
+    neonatal %>% filter(admission %in% c("No")) %>% nrow()/nrow(neonatal)*100)
+     
+    )
+
+
+    df4  <-  setNames(df4,c("Groups","yes %","no %","number for yes","number for no"))
+
+kable(df4)
+
+
+```
+
+## P-value calculation 
+
+There are 3 groups in here so we can do an 3 groups Analysis of variance test statistical analysis test to see if the groups are different.
+before doing the test we need to define the hypothesis at 5% significance level which will help us to determine if the groups there exists a significant difference between them. 
+
+
+Null Hypothesis: H0: Birthweight of the newborns is the same in all groups.
+Alternate Hypothesis: H1: Birthweight of the newborns is different in the groups.
+
+### For birthweight
+```{r}
+anova <- aov(birthweight~bmicat,data=neonatal)
+summary(anova)
+TukeyHSD(anova)
+
+```
+
+Our result show that p-value is much large than 0.05 so we can reject the Alternate hypothesis.
+TukeyHSD test is used to determine how much the groups differ from each other. Our results show that p-value for all the 3 groups is very large so we conclude that all of the 3 groups are similar to each other. Moreoever the F-stats value is very small which also supports our hypothesis.
+
+
+### for Gestational age 
+
+Null hypothesis H0: Gestational age is the same in all groups.
+Alternate hypothesis H1: Gestational age is different in the groups.
+
+```{r}
+anova <- aov(gestationalage~bmicat,data=neonatal)
+summary(anova)
+TukeyHSD(anova)
+```
+
+Our results show that p-value is less than 0.05 so we reject our null hypothesis and we can say that the groups are different in geostational age. Note that residuals are also less here as compared to the previous analysis. The asteric next to p-value also shows the significance of the test.
+Tukeytest here shows the difference between the groups. The p-value for the severaly obese and obese comes out to be more than 0.05 so we can say that there is a high significant difference between these 2 groups as compared to obese and morbidltly obese as well as as the several obese and morbdily obese.
+
+
+### For LGA
+
+here the data is categorical so we will use the chisquare test. 
+For the test again we define our hypothesis as
+
+Null hypothesis H0: LGA is the same in all groups.
+Alternate hypothesis H1: LGA is different in the groups.
+
+```{r}
+chisq.test(table(neonatal$lga))
+```
+
+
+The results show that p-value is less than 0.05 so we reject our null hypothesis and we can say that the groups are different in LGA. our degrees of freedom is 1 so we can say that the test is independent.
+
+### For Hypoglycaemia
+
+Null hypothesis H0: Hypoglycaemia is the same in all groups.
+Alternate hypothesis H1: Hypoglycaemia is different in the groups.
+
+```{r}
+chisq.test(table(neonatal$hypoglycaemia))
+```
+In this case the groups are different in the hypoglycaemia because the p-value is less than 0.05. The degrees of freedom is 1 so we can say that the test is independent. X-squared value is 1771.8 so we can say that the test is not significant. Remember that actual degreess of freedom is 2 but R always takes value 1 less than size of population. 
+
+
+
+### For admission
+
+Null hypothesis H0: Admission is the same in all groups.
+Alternate hypothesis H1: Admission is different in the groups.
+
+
+```{r}
+chisq.test(table(neonatal$admission))
+
+```
+
+Admission is different in the groups. The p-value is less than 0.05. X-squared value of chisquare test is 907.5 so we can say that the test is not significant.
+
+## Paragraph about the Analysis
+The analysis is based on the following questions:
+* Is the BMI is siginficaltly different in the groups
+* What's the relation between the BMI and neonatal outcomes.
+
+We have performed several statistical tests to determine the significance of the data such ANOVA, chi-square and Tukey test. 
+The result for the tests with numerical data column such as birthweight and geostational have different p-values at 5% significance level with 95% confidence interval.
+For the birthweight the p-value is >0.05 which shows that birthweight for the 3 groups are almost identical. It is also verified from the mean values of the birth weight where all values are near to 3450. IQR is also very small so we can say that the birthweight is not significantly different in the groups.
+With regards to geostational age the p-value is <0.05 which shows that the geostational age is significantly different in the groups. 
+Moreover the Tukey test show that the two groups of `35-39.9 (severly obese)-30-34.9(obese) ` are not siginficaltly different as compared to all other combination of groups. 
+
+There are 3 categorical variables in the dataset which required the chi-squared test of significance. In all the 3 categorical variables the p-value is <0.05 which shows that the categorical variables are significantly different in the groups.
+Overall analysis shows that LGA, Hypoglycaemia and Admissions for all the 3 groups are significantly different from BMI while there exists some corelation for birthweight and hypoglycaemia. 
+
