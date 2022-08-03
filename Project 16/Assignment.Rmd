@@ -1,0 +1,181 @@
+---
+title: "Assignment"
+author: '...'
+date: "6/2/2022"
+output: 
+    word_document:
+    number_sections: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = F,include=T,results='show',message=F,warning=FALSE)
+```
+
+
+
+
+
+```{r libraries}
+library(readxl)
+brh <- read_excel("brh_complet_01.xlsx", 
+    sheet = "brh_complet", col_types = c("date", 
+        "numeric", "numeric", "numeric", 
+        "numeric", "numeric", "numeric", 
+        "numeric", "numeric", "numeric", 
+        "numeric", "numeric", "numeric", 
+        "numeric", "numeric", "numeric", 
+        "numeric", "numeric", "numeric", 
+        "numeric", "numeric", "numeric", 
+        "numeric", "numeric", "numeric", 
+        "numeric", "text", "numeric", "numeric", 
+        "numeric", "numeric", "numeric", 
+        "numeric", "numeric", "numeric", 
+        "numeric", "text", "numeric", "numeric", 
+        "numeric", "text", "text", "text", 
+        "text", "numeric", "text", "numeric", 
+        "text", "numeric", "text", "text", 
+        "text", "text", "numeric", "text", 
+        "text", "numeric", "numeric", "numeric", 
+        "numeric", "numeric", "numeric", 
+        "numeric", "numeric", "numeric", 
+        "numeric", "numeric", "numeric", 
+        "numeric", "numeric", "numeric", 
+        "numeric", "numeric", "numeric", 
+        "numeric", "numeric", "numeric", 
+        "numeric", "numeric", "numeric", 
+        "numeric", "numeric"))
+
+
+```
+
+
+
+# Viewing dataset
+```{r}
+head(brh)
+```
+
+There are lots of variables so we can select 3 variables as required by question. 
+
+
+
+```{r pressure, echo=FALSE, results='markup'}
+library(tidyverse)
+brh <- brh %>% select(Date,m1_usd,cred_sect_priv_mg)
+```
+
+Firstly we check the time series of the data and it's relation with m1_usd using plot command.
+
+
+
+```{r}
+plot(brh$Date,brh$m1_usd)
+```
+
+We analyse that relation between these variables is non--linear. We can do the same procedure for other variable as well. 
+
+```{r}
+plot(brh$Date,brh$cred_sect_priv_mg)
+
+```
+
+The above plots show that the relationship between these variables is non--linear and both are increasing in recent years.. 
+
+# Applying the Statistic functions
+
+## stationary Test
+Detecting if data is time statinary or not. We can use the function `time.series`. In order to check if time series is stationary, we use adf.test function of tseries package. 
+Before performing the test we define our two hypothesis as 
+
+H0: Variables have Unit Root  
+Ha: Variable is stationary
+
+We assume significance level of 0.05. 
+
+```{r}
+library(tseries)
+library(aTSA)
+
+#removing na values
+brh  <- na.omit(brh)
+
+brh1 <- ts(brh[, c("m1_usd", "cred_sect_priv_mg")], frequency = 12 ,start=c(1958, 9, 1))
+
+brh1 <- ts(as.vector(brh1))
+
+
+stationary.test(brh1)
+```
+
+The result of stationary test shows that p-value is less than 0.05 hence we reject our null hypotheses and accept the alternative hypothesis Ha. 
+
+## Verifying sense de la causalite
+
+Granger causalite test is used to test the causal relationship between two time series. 
+Just like to stationary test, we define our two hypothesis as
+
+H0: Time series data US dollar `m1_usd` is not causally related to variable `cred_sect_priv_mg`. 
+
+HA: Time series data US dollar `m1_usd` is causally related to variable `cred_sect_priv_mg`
+
+It will help us to analyze of the first time series data predicts the future of the second time series data. 
+
+
+```{r}
+library(lmtest)
+grangertest(m1_usd ~ cred_sect_priv_mg,order=3,data=brh)
+
+```
+
+The result from the granger causalite test shows two models. 
+
+Model 1 predicts the future of the price in usd based on its values of 2 variables in previous 3 years since we have used order=3 in equation. 
+
+Model 2 uses only the value of in previous 3 years for price in usd.
+
+F-test value comes out to be 23.82. p-value is less than 0.05 which is our significance level at 95% confidence interval. Hence we reject our null hypothesis and accept the alternative hypothesis.
+We conclude that knowing the value of variable `cred_sect_priv_mg` is predictive of the variable `m1_usd`.
+
+We can do the reverse causation test to check if the reverse is true for our hypothesis. It means we can check if the usd is predictive of `cred_sect_priv_mg`. For that purpose we use following command.
+
+```{r}
+grangertest(cred_sect_priv_mg~m1_usd,order=3,data=brh)
+```
+
+The result for reverse test indicates that p-value is less than 0.05. Hence we reject our null hypothesis and accept the alternative hypothesis.
+This reverse test shows that values of variable `m1_usd` are helpful to predict future values of variable `cred_sect_priv_mg`.
+
+So in short both values can predict each other.
+
+
+## Regression test
+
+Now we will do the linear test using one variable as independent and other as dependent. Since it is required to use same variables as casuality test so we use dataset `brh` here as well. Note that there is no control variable for the dependent variable hence the result should be straight forward to analyze and the test should be only linear regression instead of multiple linear regression. We can define our hypothesis in this test
+
+H0: Variable  `m1_`usd`  is not linear related to variable  `cred_sect_priv_mg`
+
+HA: Variable  `m1_usd`  has a linear relation to variable  `cred_sect_priv_mg`
+
+Our significance level is again 5%.
+```{r}
+summary(lm(m1_usd ~ cred_sect_priv_mg,data=brh))
+```
+```
+
+The above result show that p-value is <0.05 hence we reject our null hypothesis and accept the alternative hypothesis which means the two variables are not linearly linked to each other. 
+The other parameters shown in the result are F-stats, Intercept, Adjusted R2, and standard error. We will explain thme one by one below
+
+*   Intercept: The intercept of the linear regression model indicates the value of the independent variable at which the dependent variable is equal to zero.
+
+*   F-stats: F-stats is the ratio of the variance of the residuals to the variance of the our model. Higher the F-stats, the better our model is.
+
+*   Adjusted R2: R2 is the coefficient of determination. It is a measure of how well the model fits the data. Our R2 is 0.85 which is good an it means 85% of time our model does not overfit the data.
+
+*   standard error: Standard error is the standard deviation of the residuals. It is the standard deviation of the error of our model.
+
+*   3 asterics are used to indicate that the variables are highly significant to each other which does relate to the casuality test where both variables were related to each value as indicated by casuality and reverse casuality test. 
+
+
+
+
+
